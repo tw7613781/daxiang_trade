@@ -1,7 +1,9 @@
 # Daxiang Quant Trading Platform
 
+------
+
 ## Data
-- Bitmex  
+- [Bitmex] (https://github.com/BitMEX/sample-market-maker)
 
 ## Indicator library
 
