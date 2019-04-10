@@ -1,8 +1,7 @@
-# Daxiang trade platform wanna become a profitable and open-source trading system.       
+# Daxiang Quant Trading Platform
 
-## Bitmex support
-- http level 
-- function level 
+## Data
+- Bitmex  
 
 ## Indicator library
 
