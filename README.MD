@@ -11,6 +11,10 @@
 
 ## Dashboard
 
-
+## Unit Test
+~~~python
+pip3 install pytest
+pytest
+~~~
 
 
