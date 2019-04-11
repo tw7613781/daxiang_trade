@@ -124,9 +124,3 @@ ORDERID_PREFIX = "mm_bitmex_"
 
 # Specify the contracts that you hold. These will be used in portfolio calculations.
 CONTRACTS = ['XBTUSD']
-
-# Assemble settings.
-settings = {}
-
-# Main export
-settings = dotdict(settings)

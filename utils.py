@@ -3,7 +3,8 @@ import os
 import sys
 import importlib
 from decimal import Decimal
-from settings import settings
+
+import settings
 
 def import_path(fullpath):
     """
