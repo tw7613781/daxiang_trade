@@ -12,7 +12,7 @@ def import_path(fullpath):
     import from anywhere, something __import__ does not do.
     """
     path, filename = os.path.split(fullpath)
-    filename, ext = os.path.splitext(filename)
+    filename, _ = os.path.splitext(filename)
     sys.path.insert(0, path)
     module = importlib.import_module(filename, path)
     importlib.reload(module)  # Might be out of date
