@@ -8,9 +8,9 @@ import json
 import decimal
 import logging
 from urllib.parse import urlparse, urlunparse
-from settings import settings
 from bitmex_auth import generate_expires, generate_signature
-
+import settings
+import utils as u
 
 class BitMEXWebsocket():
     '''
@@ -98,7 +98,7 @@ class BitMEXWebsocket():
             }
 
         # The instrument has a tickSize. Use it to round values.
-        return {k: toNearest(float(v or 0), instrument['tickSize']) for k, v in iteritems(ticker)}
+        return {k: u.toNearest(float(v or 0), instrument['tickSize']) for k, v in iteritems(ticker)}
 
     def funds(self):
         return self.data['margin'][0]
@@ -153,7 +153,7 @@ class BitMEXWebsocket():
                                          header=self.__get_auth()
                                          )
 
-        setup_custom_logger('websocket', log_level=settings.LOG_LEVEL)
+        u.setup_custom_logger('websocket', log_level=settings.LOG_LEVEL)
         self.wst = threading.Thread(target=lambda: self.ws.run_forever(sslopt=sslopt_ca_certs))
         self.wst.daemon = True
         self.wst.start()
