@@ -1,5 +1,9 @@
     
+import time
 from requests.auth import AuthBase
+import hashlib
+import hmac
+from urllib.parse import urlparse
 
 
 class AccessTokenAuth(AuthBase):
@@ -15,11 +19,6 @@ class AccessTokenAuth(AuthBase):
         if (self.token):
             r.headers['access-token'] = self.token
         return r
-
-from requests.auth import AuthBase
-import time
-from market_maker.auth.APIKeyAuth import generate_signature
-
 
 class APIKeyAuthWithExpires(AuthBase):
 
@@ -44,17 +43,6 @@ class APIKeyAuthWithExpires(AuthBase):
 
         return r
 
-
-from requests.auth import AuthBase
-import time
-import hashlib
-import hmac
-from future.builtins import bytes
-from future.standard_library import hooks
-with hooks():  # Python 2/3 compat
-    from urllib.parse import urlparse
-
-
 class APIKeyAuth(AuthBase):
 
     """Attaches API Key Authentication to the given Request object."""
@@ -67,7 +55,7 @@ class APIKeyAuth(AuthBase):
     def __call__(self, r):
         """Called when forming a request - generates api key headers."""
         # modify and return the request
-        nonce = generate_expires()
+        nonce = generate_nonce()
         r.headers['api-expires'] = str(nonce)
         r.headers['api-key'] = self.apiKey
         r.headers['api-signature'] = generate_signature(self.apiSecret, r.method, r.url, nonce, r.body or '')
@@ -75,8 +63,8 @@ class APIKeyAuth(AuthBase):
         return r
 
 
-def generate_expires():
-    return int(time.time() + 3600)
+def generate_nonce():
+    return int(round(time.time() + 3600))
 
 
 # Generates an API signature.
