@@ -31,6 +31,7 @@ API_SECRET = "God1eB-ywL0CfhXwflkyfcB9z7XV36sbwss_JkEvf1RQqF2E"
 
 # Instrument to market make on BitMEX.
 SYMBOL = "XBTUSD"
+SUB_TOPICS = "tradeBin5m"
 
 
 ########################################################################################################################
@@ -107,7 +108,7 @@ TIMEOUT = 7
 DRY_BTC = 50
 
 # Available levels: logging.(DEBUG|INFO|WARN|ERROR)
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
 
 # To uniquely identify orders placed by this bot, the bot sends a ClOrdID (Client order ID) that is attached
 # to each order so its source can be identified. This keeps the market maker from cancelling orders that are

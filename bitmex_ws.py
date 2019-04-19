@@ -19,17 +19,23 @@ import settings
 # Right after, the MM can start using its data. It will be updated in realtime, so the MM can
 # poll really often if it wants.
 class BitMEXWebsocket:
+    '''Connect to the websocket and initialize data stores.
+        endpoint: "https://testnet.bitmex.com/api/v1" or "https://www.bitmex.com/api/v1"
+        symbol: contract type. only can be one of them, like XBTUSD, XBTM19, ETHUSD
+        sub_topic: subscription topics. can be many of them, type is list if many otherwise string is OK. like ["execution", "instrument", 
+                    "order", "orderBookL2", "position", "quote", "trade", "margin"]
+    '''
 
     # Don't grow a table larger than this amount. Helps cap memory usage.
     MAX_TABLE_LEN = 200
 
-    def __init__(self, endpoint, symbol, api_key=settings.API_KEY, api_secret=settings.API_SECRET):
-        '''Connect to the websocket and initialize data stores.'''
+    def __init__(self, endpoint=settings.BASE_URL, symbol=settings.SYMBOL, sub_topic=settings.SUB_TOPICS, api_key=settings.API_KEY, api_secret=settings.API_SECRET):
         self.logger = u.setup_custom_logger(__name__)
         self.logger.debug("Initializing WebSocket.")
 
         self.endpoint = endpoint
         self.symbol = symbol
+        self.sub_topic = [sub_topic] if not isinstance(sub_topic, list) else sub_topic
 
         if api_key is not None and api_secret is None:
             raise ValueError('api_secret is required if api_key is provided')
@@ -69,7 +75,10 @@ class BitMEXWebsocket:
         return instrument
 
     def get_ticker(self):
-        '''Return a ticker object. Generated from quote and trade.'''
+        '''
+        Return a ticker object. Generated from quote and trade.
+        The ticker is not candle data, but equals to the close price of candle data
+        '''
         lastQuote = self.data['quote'][-1]
         lastTrade = self.data['trade'][-1]
         ticker = {
@@ -125,8 +134,8 @@ class BitMEXWebsocket:
         self.wst.start()
         self.logger.debug("Started thread")
 
-        # Wait for connect before continuing
-        conn_timeout = 5
+        # Wait for conn_timeout before continuing, throw a error if still cannot establish a connection after timeout
+        conn_timeout = 10
         while not self.ws.sock or not self.ws.sock.connected and conn_timeout:
             sleep(1)
             conn_timeout -= 1
@@ -158,11 +167,11 @@ class BitMEXWebsocket:
         '''
 
         # You can sub to orderBookL2 for all levels, or orderBook10 for top 10 levels & save bandwidth
-        symbolSubs = ["execution", "instrument", "order", "orderBookL2", "position", "quote", "trade"]
-        genericSubs = ["margin"]
+        # symbolSubs = ["execution", "instrument", "order", "orderBookL2", "position", "quote", "trade"]
+        # genericSubs = ["margin"]
 
-        subscriptions = [sub + ':' + self.symbol for sub in symbolSubs]
-        subscriptions += genericSubs
+        subscriptions = [sub + ':' + self.symbol for sub in self.sub_topic]
+        # subscriptions += genericSubs
 
         urlParts = list(urllib.parse.urlparse(self.endpoint))
         urlParts[0] = urlParts[0].replace('http', 'ws')
@@ -286,8 +295,10 @@ if __name__ == '__main__':
 
     logger = u.setup_custom_logger('console')
 
+    symbolSubs = ["execution", "instrument", "order", "orderBookL2", "position", "quote", "trade", "margin"]
+
     # Instantiating the WS will make it connect. Be sure to add your api_key/api_secret.
-    ws = BitMEXWebsocket(endpoint="https://testnet.bitmex.com/api/v1", symbol="XBTUSD")
+    ws = BitMEXWebsocket(endpoint="https://testnet.bitmex.com/api/v1", symbol="XBTUSD", sub_topic=symbolSubs)
 
     logger.info("Instrument data: %s" % ws.get_instrument())
 
