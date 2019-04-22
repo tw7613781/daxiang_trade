@@ -1,5 +1,6 @@
 # Daxiang Margin Trading Robot    
-大象保证金交易机器人
+
+Risk management is a thousand times more important than your trading strategy.
 
 ## Data
 - [Bitmex](https://github.com/BitMEX/sample-market-maker)
@@ -17,5 +18,3 @@
 pip3 install pytest
 pytest
 ~~~
-
-
