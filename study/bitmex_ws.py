@@ -19,11 +19,13 @@ import settings
 # Right after, the MM can start using its data. It will be updated in realtime, so the MM can
 # poll really often if it wants.
 class BitMEXWebsocket:
-    '''Connect to the websocket and initialize data stores.
-        endpoint: "https://testnet.bitmex.com/api/v1" or "https://www.bitmex.com/api/v1"
-        symbol: contract type. only can be one of them, like XBTUSD, XBTM19, ETHUSD
-        sub_topic: subscription topics. can be many of them, type is list if many otherwise string is OK. like ["execution", "instrument", 
-                    "order", "orderBookL2", "position", "quote", "trade", "margin"]
+    '''
+    Connect to the websocket and initialize data stores.
+    endpoint: "https://testnet.bitmex.com/api/v1" or "https://www.bitmex.com/api/v1"
+    symbol: contract type. only can be one of them, like XBTUSD, XBTM19, ETHUSD
+    sub_topic: subscription topics. can be many of them, type is list if many otherwise string is OK. like ["execution", "instrument", 
+                "order", "orderBookL2", "position", "quote", "trade", "margin"]
+    The class is designed for market maker purpose. 
     '''
 
     # Don't grow a table larger than this amount. Helps cap memory usage.
@@ -56,11 +58,11 @@ class BitMEXWebsocket:
         self.__connect(wsURL, symbol)
         self.logger.info('Connected to WS.')
 
-        # Connected. Wait for partials
-        self.__wait_for_symbol(symbol)
-        if api_key:
-            self.__wait_for_account()
-        self.logger.info('Got all market data. Starting.')
+        # # Connected. Wait for partials
+        # self.__wait_for_symbol(symbol)
+        # if api_key:
+        #     self.__wait_for_account()
+        # self.logger.info('Got all market data. Starting.')
 
     def exit(self):
         '''Call this to exit - will close websocket.'''
@@ -227,6 +229,7 @@ class BitMEXWebsocket:
 
                     # Limit the max length of the table to avoid excessive memory usage.
                     # Don't trim orders because we'll lose valuable state if we do.
+                    # Write data in loop, remove old data if size is too big. The size currently is 200 lines
                     if table not in ['order', 'orderBookL2'] and len(self.data[table]) > BitMEXWebsocket.MAX_TABLE_LEN:
                         self.data[table] = self.data[table][int(BitMEXWebsocket.MAX_TABLE_LEN / 2):]
 

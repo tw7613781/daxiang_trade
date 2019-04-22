@@ -1,3 +1,4 @@
+import settings as s
 from bitmex_ws import BitMEXWebsocket
 '''
 study the data format received from bitmex, method to run the code
@@ -19,11 +20,11 @@ def trade_data():
     "tradeBin1h": => candle data for 1 hour
     "tradeBin1d": => candle data for 1 day
     '''
-    endpoint = 'https://www.bitmex.com/api/v1'
+    endpoint = s.BASE_URL
     symbol = 'XBTUSD'
     sub_topic = 'tradeBin5m'
-    API_KEY = '7LpiutnmX__Zl_YrkPc8c25l'
-    API_SECRET = '1u99uZaAwXsmjdOuyJQLHQlxiZW_rPjWqKsaSjFodtTykuP7'
+    API_KEY = s.API_KEY
+    API_SECRET = s.API_SECRET
 
     ws = BitMEXWebsocket(endpoint=endpoint, symbol=symbol, sub_topic=sub_topic, api_key=API_KEY, api_secret=API_SECRET)
 
@@ -38,12 +39,52 @@ def quote_data():
     "quoteBin1h": => candle data for 1 hour
     "quoteBin1d": => candle data for 1 day
     '''
-    endpoint = 'https://www.bitmex.com/api/v1'
+    endpoint = s.BASE_URL
     symbol = 'XBTUSD'
     sub_topic = 'quoteBin1m'
-    API_KEY = '7LpiutnmX__Zl_YrkPc8c25l'
-    API_SECRET = '1u99uZaAwXsmjdOuyJQLHQlxiZW_rPjWqKsaSjFodtTykuP7'
+    API_KEY = s.API_KEY
+    API_SECRET = s.API_SECRET
 
     ws = BitMEXWebsocket(endpoint=endpoint, symbol=symbol, sub_topic=sub_topic, api_key=API_KEY, api_secret=API_SECRET)
 
+def margin_data():
+    '''
+    A margin is the money borrowed from a brokerage firm to purchase an investment
+    '''
+    endpoint = s.BASE_URL
+    symbol = 'XBTUSD'
+    sub_topic = 'margin'
+    API_KEY = s.API_KEY
+    API_SECRET = s.API_SECRET
 
+    ws = BitMEXWebsocket(endpoint=endpoint, symbol=symbol, sub_topic=sub_topic, api_key=API_KEY, api_secret=API_SECRET)
+
+def position_data():
+    '''
+    
+    '''
+    endpoint = s.BASE_URL
+    symbol = 'XBTUSD'
+    sub_topic = 'position'
+    API_KEY = s.API_KEY
+    API_SECRET = s.API_SECRET
+
+    ws = BitMEXWebsocket(endpoint=endpoint, symbol=symbol, sub_topic=sub_topic, api_key=API_KEY, api_secret=API_SECRET)
+
+def instrument_data():
+    endpoint = s.BASE_URL
+    symbol = 'XBTUSD'
+    sub_topic = 'instrument'
+    API_KEY = s.API_KEY
+    API_SECRET = s.API_SECRET
+
+    ws = BitMEXWebsocket(endpoint=endpoint, symbol=symbol, sub_topic=sub_topic, api_key=API_KEY, api_secret=API_SECRET)
+
+def execution_data():
+    endpoint = s.BASE_URL
+    symbol = 'XBTUSD'
+    sub_topic = 'execution'
+    API_KEY = s.API_KEY
+    API_SECRET = s.API_SECRET
+
+    ws = BitMEXWebsocket(endpoint=endpoint, symbol=symbol, sub_topic=sub_topic, api_key=API_KEY, api_secret=API_SECRET)

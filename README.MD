@@ -1,4 +1,5 @@
-# Daxiang Quant Trading Platform
+# Daxiang Margin Trading Robot    
+大象保证金交易机器人
 
 ## Data
 - [Bitmex](https://github.com/BitMEX/sample-market-maker)
