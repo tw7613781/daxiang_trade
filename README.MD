@@ -5,7 +5,7 @@
 
 ## Introduction    
 - Simple strategy, robust system, plus risk management are the three characteristics of Daxiang trading robot.      
-- Supports parameterization and modularity, which means it's easier to control and scale up the system.      
+- It's parameterization and modularity, which means it's easier to control and scale up the system.      
 - Supports backtesting and a simple dashboard.   
 
 ## Installation  
