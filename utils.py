@@ -1,6 +1,7 @@
 import time
+from bravado.exception import HTTPError
 
-def retry(func, count=5):
+def retry(func, count=20):
     err = None
     for i in range(count):
         try:
@@ -10,10 +11,13 @@ def retry(func, count=5):
             if rate_remain < 10:
                 time.sleep(5 * 60 * (1 + rate_limit - rate_remain) / rate_limit)
             return ret
-        except Exception as error:
+        except HTTPError as error:
             status_code = error.status_code
             err = error
-            if status_code >= 500:
+            if status_code == 503:
+                time.sleep(0.5)
+                continue
+            elif status_code >= 500:
                 time.sleep(pow(2, i + 1))
                 continue
             elif status_code == 400 or \
@@ -23,4 +27,4 @@ def retry(func, count=5):
                     status_code == 404 or \
                     status_code == 429:
                 raise Exception(error)
-    raise err
+    raise Exception(err)
