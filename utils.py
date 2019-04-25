@@ -74,12 +74,12 @@ def get_logger(name, log_level=s.LOG_LEVEL):
     logger.addHandler(handler)
     return logger
 
-def logging_order(logger, id, type, side, qty, price='', stop=''):
+def logging_order(logger, id, type, side, qty, price=None, stop=None):
     logger.info(f"========= New Order ==============")
     logger.info(f"ID     : {id}")
     logger.info(f"Type   : {type}")
     logger.info(f"Side   : {side}")
     logger.info(f"Qty    : {qty}")
-    logger.info(f"Limit  : {price}")
+    logger.info(f"Price  : {price}")
     logger.info(f"Stop   : {stop}")
     logger.info(f"======================================")
