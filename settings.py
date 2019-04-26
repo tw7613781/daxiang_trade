@@ -17,6 +17,16 @@ API_SECRET = "God1eB-ywL0CfhXwflkyfcB9z7XV36sbwss_JkEvf1RQqF2E"
 
 # Instrument.
 SYMBOL = "XBTUSD"
+# Candle interval for ohlcv data
+BIN_SIZE = "5m"
+# Leverage x
+LEVERAGE= 5
+# rate = order amount / total balance
+RATE = 0.5
+
+########################################################################################################################
+# Others
+########################################################################################################################
 
 # Logging Level
 # CRITICAL, ERROR, WARNING, INFO, DEBUG

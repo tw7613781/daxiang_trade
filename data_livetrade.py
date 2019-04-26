@@ -12,41 +12,39 @@ import utils as u
 logger = u.get_logger(__name__)
 
 class Data:
-    position = None
-    margin = None
-    market_price = None
+
     def __init__(self):
         self.client = bitmex.bitmex(test=s.TEST, api_key=s.API_KEY, api_secret=s.API_SECRET)
 
     def get_margin(self):
         '''
-        account balance
-        当前的账户余额
+        account balance summary
+        当前的账户余额相关信息
         '''
-        self.margin=u.retry(lambda: self.client
-                                        .User.User_getMargin(currency="XBt").result())
-        return self.margin
+        return u.retry(lambda: self.client.User.User_getMargin(currency="XBt").result())
 
     def get_position(self):
         """
-        current order position, return None if there is no ordering
+        current order position including open and close position, return None if there is no position
         当前的仓位,如果没有的话，返回None
         """
-        ret = u.retry(lambda: self.client
-                                  .Position.Position_get(filter=json.dumps({"symbol": s.SYMBOL})).result())
-        if len(ret) > 0:
-            self.position = ret[0]
-        else: self.position = None
-        return self.position
+        ret = u.retry(lambda: self.client.Position.Position_get(filter=json.dumps({"symbol": s.SYMBOL})).result())
+        if ret: return ret[0]
+        else: return None
     
     def get_market_price(self):
         '''
         current close price for settings symbol
         当前设置的交易对收盘价格
         '''
-        self.market_price = u.retry(lambda: self.client
-                                                .Instrument.Instrument_get(symbol=s.SYMBOL).result())[0]["lastPrice"]
-        return self.market_price
+        return u.retry(lambda: self.client.Instrument.Instrument_get(symbol=s.SYMBOL).result())[0]["lastPrice"]
+    
+    def set_leverage(self, leverage):
+        '''
+        set leverage to position
+        '''
+        return u.retry(lambda: self.client.Position.Position_updateLeverage(symbol=s.SYMBOL, leverage=leverage).result())
+
 
     def fetch_latest_ohlcv(self, bin_size, length):
         '''
