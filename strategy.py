@@ -1,14 +1,25 @@
 '''
 Provide different strategys. if want to add a new one, just put here.
 '''
+import pandas as pd
 
-import talib
-
-def _macd(close, fastperiod=12, slowperiod=26, signaperiod=9):
-    return talib.MACD(close, fastperiod, slowperiod, signaperiod)
-
-def _rsi(close, period=14):
-    return talib.RSI(close, period)
+def _macd(df, n_fast=12, n_slow=26, n_signal=9):
+    """Calculate MACD, MACD Signal and MACD difference
+    :param df: pandas.DataFrame
+    :param n_fast: 
+    :param n_slow: 
+    :param n_signal:
+    :return: pandas.DataFrame
+    """
+    EMAfast = pd.Series(df['close'].ewm(span=n_fast, min_periods=n_slow).mean())
+    EMAslow = pd.Series(df['close'].ewm(span=n_slow, min_periods=n_slow).mean())
+    MACD = pd.Series(EMAfast - EMAslow, name='macd')
+    MACD_signal = pd.Series(MACD.ewm(span=n_signal, min_periods=n_signal).mean(), name='macd_signal')
+    MACD_diff = pd.Series(MACD - MACD_signal, name='macd_diff')
+    df = df.join(MACD)
+    df = df.join(MACD_signal)
+    df = df.join(MACD_diff)
+    return df
 
 def _crossover(a, b):
     return a[-2] < b[-2] and a[-1] > b[-1]
@@ -16,14 +27,14 @@ def _crossover(a, b):
 def _crossunder(a, b):
     return a[-2] > b[-2] and a[-1] < b[-1]
 
-def MACD(open=None, close=None, high=None, low=None, volume=None):
+def MACD(df):
     '''
-    strategy function read data from ohlcv array, gives a long or short or nothing signal
+    strategy function read data from ohlcv array with length 50, gives a long or short or nothing signal
     '''
-    macd, signal, _ = _macd(close)
-    if _crossover(macd, signal):
+    df = _macd(df)
+    if _crossover(df.macd.values, df.macd_signal.values):
         return 'Buy'
-    elif _crossunder(macd, signal):
+    elif _crossunder(df.macd.values, df.macd_signal.values):
         return 'Sell'
     else:
         return 'Nothing'

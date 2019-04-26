@@ -23,15 +23,36 @@ class Data:
         '''
         return u.retry(lambda: self.client.User.User_getMargin(currency="XBt").result())
 
+    def get_excess_margin(self):
+        '''
+        get excess margin
+        '''
+        return self.get_margin()['excessMargin']
+    
+    def get_wallet_balance(self):
+        '''
+        get account balance
+        '''
+        return self.get_margin()['walletBalance']
+
     def get_position(self):
-        """
+        '''
         current order position including open and close position, return None if there is no position
         当前的仓位,如果没有的话，返回None
-        """
+        '''
         ret = u.retry(lambda: self.client.Position.Position_get(filter=json.dumps({"symbol": s.SYMBOL})).result())
         if ret: return ret[0]
         else: return None
-    
+
+    def get_current_position(self):
+        '''
+        get currentQty of position, can be positive and nagative
+        '''
+        ret = self.get_position()
+        if ret:
+            return ret['currentQty']
+        else: return 0
+
     def get_market_price(self):
         '''
         current close price for settings symbol
@@ -46,9 +67,9 @@ class Data:
         return u.retry(lambda: self.client.Position.Position_updateLeverage(symbol=s.SYMBOL, leverage=leverage).result())
 
 
-    def fetch_latest_ohlcv(self, bin_size, length):
+    def get_latest_ohlcv(self, bin_size, length):
         '''
-        fetch data for open-high-low-close-volumn array
+        get data for open-high-low-close-volumn array
         获取open-high-low-close-volumn数组数据
         bin_size: data interval, available options: [1m,5m,1h,1d].
         length: length must less than 750, which is the maximum size per reqeust made by Bitmex. 
