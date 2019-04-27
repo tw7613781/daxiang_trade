@@ -4,7 +4,7 @@ By utilizing Data class and stratedy methods, the Portfolio will manage risk and
 
 from data_livetrade import Data
 from strategy import MACD
-from datetime.datetime import utcnow
+from datetime import datetime as t
 import settings as s
 import pandas as pd
 import math
@@ -17,7 +17,7 @@ class Portfolio:
         self.leverage = s.LEVERAGE
         self.data.set_leverage(self.leverage)
         self.bin = s.BIN_SIZE
-        self.balance = pd.DataFrame(index=utcnow(), {'balance':self.data.get_wallet_balance()})
+        self.balance = pd.DataFrame(index=t.utcnow(), data={'balance':self.data.get_wallet_balance()})
     
     def get_qty(self):
         '''
@@ -28,6 +28,9 @@ class Portfolio:
         return math.floor(margin / 100000000 * price * self.leverage * self.rate)
 
     def run(self):
+        '''
+        main process of portfolio
+        '''
         qty = self.get_qty()
         ohlcv = self.data.get_latest_ohlcv(self.bin, 50)
         signal = MACD(ohlcv)
@@ -39,7 +42,7 @@ class Portfolio:
         else: pass
         current_balance = self.data.get_wallet_balance()
         if self.balance.balance.values[-1] != current_balance:
-            self.balance.append(pd.DataFrame(index=utcnow(), {'balance': current_balance}))
+            self.balance.append(pd.DataFrame(index=t.utcnow(), data={'balance': current_balance}))
     
     def portfolio_info(self):
         '''
@@ -48,6 +51,6 @@ class Portfolio:
         '''
         if self.balance.count > 1:
             change_rate = self.balance.pct_change()
-            return pd.concat([self.change, change_rate], axis=1, keys=['balance','rate']), self.get_current_position()
+            return pd.concat([self.balance, change_rate], axis=1, keys=['balance','rate']), self.data.get_current_position()
         else:
-            return self.balance, self.get_current_position
+            return self.balance, self.data.get_current_position()
