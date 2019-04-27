@@ -2,9 +2,28 @@ import time
 import os
 import base64
 import logging
+from logging.handlers import TimedRotatingFileHandler
 import pandas as pd
 import settings as s
 from bravado.exception import HTTPError
+
+def get_logger(name, log_level=s.LOG_LEVEL):
+    '''
+    customize logger format
+    '''
+    formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(message)s')
+
+    logname = 'log/daxiang_robot.log'
+    handler = TimedRotatingFileHandler(logname, when='midnight', interval=1)
+    handler.suffix = '%Y%m%d'
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(log_level)
+    logger.addHandler(handler)
+    return logger
+
+logger = get_logger(__name__)
 
 def retry(func, count=5):
     '''
@@ -38,9 +57,11 @@ def retry(func, count=5):
                     status_code == 403 or \
                     status_code == 404 or \
                     status_code == 429:
+                logger.error(Exception(error))
                 raise Exception(error)
             else:
                 i = i+1
+    logger.error(Exception(err))
     raise Exception(err)
 
 def to_data_frame(data, reverse):
@@ -60,21 +81,7 @@ def random_str():
     '''
     return base64.b64encode(os.urandom(5)).decode()
 
-def get_logger(name, log_level=s.LOG_LEVEL):
-    '''
-    customize logger format
-    '''
-    formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(message)s')
-
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-
-    logger = logging.getLogger(name)
-    logger.setLevel(log_level)
-    logger.addHandler(handler)
-    return logger
-
-def logging_order(logger, id, type, side, qty, price=None, stop=None):
+def logging_order(id, type, side, qty, price=None, stop=None):
     logger.info(f"========= New Order ==============")
     logger.info(f"ID     : {id}")
     logger.info(f"Type   : {type}")

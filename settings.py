@@ -18,7 +18,14 @@ API_SECRET = "God1eB-ywL0CfhXwflkyfcB9z7XV36sbwss_JkEvf1RQqF2E"
 # Instrument.
 SYMBOL = "XBTUSD"
 # Candle interval for ohlcv data
-BIN_SIZE = "5m"
+BIN_SIZE = "1m"
+# Interval
+INTERVAL = {
+    '1m': 1 * 60,
+    '5m': 5 * 60,
+    '1h': 60 * 60,
+    '1d': 24 * 60 * 60
+    }
 # Leverage x
 LEVERAGE= 5
 # rate = order amount / total balance

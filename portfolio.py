@@ -6,8 +6,11 @@ from data_livetrade import Data
 from strategy import MACD
 from datetime import datetime as t
 import settings as s
+import utils as u
 import pandas as pd
 import math
+
+logger = u.get_logger(__name__)
 
 class Portfolio:
     
@@ -17,7 +20,7 @@ class Portfolio:
         self.leverage = s.LEVERAGE
         self.data.set_leverage(self.leverage)
         self.bin = s.BIN_SIZE
-        self.balance = pd.DataFrame(index=t.utcnow(), data={'balance':self.data.get_wallet_balance()})
+        self.balance = pd.DataFrame(index=[t.utcnow()], data={'balance':self.data.get_wallet_balance()})
     
     def get_qty(self):
         '''
@@ -31,25 +34,31 @@ class Portfolio:
         '''
         main process of portfolio
         '''
-        qty = self.get_qty()
         ohlcv = self.data.get_latest_ohlcv(self.bin, 50)
         signal = MACD(ohlcv)
+        logger.info(f'signal: {signal}')
         current_position = self.data.get_current_position()
         if signal == 'Buy':
-            self.data.buy(qty - current_position)
+            if current_position != 0:
+                self.data.order(-current_position)
+            qty = self.get_qty()
+            self.data.buy(qty)
         elif signal == 'Sell':
-            self.data.sell(qty + current_position)
+            if current_position != 0:
+                self.data.order(-current_position)
+            qty = self.get_qty()
+            self.data.sell(qty)
         else: pass
         current_balance = self.data.get_wallet_balance()
         if self.balance.balance.values[-1] != current_balance:
-            self.balance.append(pd.DataFrame(index=t.utcnow(), data={'balance': current_balance}))
+            self.balance.append(pd.DataFrame(index=[t.utcnow()], data={'balance': current_balance}))
     
     def portfolio_info(self):
         '''
         返回收益和持仓
         return profit and current position
         '''
-        if self.balance.count > 1:
+        if len(self.balance.index) > 1:
             change_rate = self.balance.pct_change()
             return pd.concat([self.balance, change_rate], axis=1, keys=['balance','rate']), self.data.get_current_position()
         else:

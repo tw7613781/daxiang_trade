@@ -94,14 +94,14 @@ class Data:
             orderType = 'Market'
             u.retry(lambda: self.client.Order.Order_new(symbol=s.SYMBOL, ordType=orderType, clOrdID=clOrdID,
                                                             side=side, orderQty=orderQty).result())
-            u.logging_order(logger=logger, id=clOrdID, type=orderType, side=side,
+            u.logging_order(id=clOrdID, type=orderType, side=side,
                             qty=orderQty, price=self.get_market_price())
         else:
             # stop order
             orderType = 'Stop'
             u.retry(lambda: self.client.Order.Order_new(symbol=s.SYMBOL, ordType=orderType, clOrdID=clOrdID,
                                                             side=side, orderQty=orderQty, stopPx=stop).result())
-            u.logging_order(logger=logger, id=clOrdID, type=orderType, side=side,
+            u.logging_order(id=clOrdID, type=orderType, side=side,
                             qty=orderQty, stop=stop)
 
     def buy(self, orderQty):
