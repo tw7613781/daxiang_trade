@@ -16,7 +16,7 @@ class Main():
         self.p = Portfolio()
         self.app = Flask(__name__)
         self.register_route()
-        self.start_time = t.utcnow()
+        self.start_time = t.now()
     
     def _start_web_server(self):
         self.server = WSGIServer(('127.0.0.1', 8080), self.app, log=None)
@@ -35,10 +35,12 @@ class Main():
     
     def index(self):
         balance, position = self.p.portfolio_info()
-        text = f'Daxiang Trading Robot - Uptime {t.utcnow() - self.start_time} <br><hr>'
-        text += f'Current Position: {position} <br>'
+        text = f'Daxiang Trading Robot - Uptime {t.now() - self.start_time} <br><hr>'
+        text += f'Current Position: {position[0]}, Average Price: {position[1]} <br>'
         text += 'Profit History: <br>'
-        text += balance.to_string()
+        text += '---------------------- Balance(XBT) -- Rate <br>'
+        for b in balance:
+            text += f'{b[0]}: {b[1]/100000000}, {b[2]*100}% <br>'
         text += '<br><hr>'
         text += 'Recent System Log: <br>'
         with open('log/daxiang_robot.log', 'r') as f:

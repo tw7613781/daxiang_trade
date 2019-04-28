@@ -47,10 +47,11 @@ class Data:
     def get_current_position(self):
         '''
         get currentQty of position, can be positive and nagative
+        get avgEntryPrice
         '''
         ret = self.get_position()
         if ret:
-            return ret['currentQty']
+            return (ret['currentQty'], ret['avgEntryPrice'])
         else: return 0
 
     def get_market_price(self):

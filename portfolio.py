@@ -20,7 +20,7 @@ class Portfolio:
         self.leverage = s.LEVERAGE
         self.data.set_leverage(self.leverage)
         self.bin = s.BIN_SIZE
-        self.balance = pd.DataFrame(index=[t.utcnow()], data={'balance':self.data.get_wallet_balance()})
+        self.balance = [(t.now(), self.data.get_wallet_balance(), 0)]
     
     def get_qty(self):
         '''
@@ -37,7 +37,7 @@ class Portfolio:
         ohlcv = self.data.get_latest_ohlcv(self.bin, 50)
         signal = MACD(ohlcv)
         logger.info(f'signal: {signal}')
-        current_position = self.data.get_current_position()
+        current_position = self.data.get_current_position()[0]
         if signal == 'Buy':
             if current_position != 0:
                 self.data.order(-current_position)
@@ -50,16 +50,14 @@ class Portfolio:
             self.data.sell(qty)
         else: pass
         current_balance = self.data.get_wallet_balance()
-        if self.balance.balance.values[-1] != current_balance:
-            self.balance.append(pd.DataFrame(index=[t.utcnow()], data={'balance': current_balance}))
+        previous_balance = self.balance[-1][1]
+        if current_balance != previous_balance:
+            self.balance.append((t.now(), current_balance, 
+            round((current_balance - previous_balance)/previous_balance,4)))
     
     def portfolio_info(self):
         '''
         返回收益和持仓
         return profit and current position
         '''
-        if len(self.balance.index) > 1:
-            change_rate = self.balance.pct_change()
-            return pd.concat([self.balance, change_rate], axis=1, keys=['balance','rate']), self.data.get_current_position()
-        else:
-            return self.balance, self.data.get_current_position()
+        return self.balance, self.data.get_current_position()

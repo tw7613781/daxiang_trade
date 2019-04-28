@@ -1,10 +1,55 @@
-2019-04-28 01:19:59,935 - INFO - signal: Nothing
-2019-04-28 01:21:00,343 - INFO - signal: Nothing
-2019-04-28 01:22:00,315 - INFO - signal: Nothing
-2019-04-28 01:23:01,378 - INFO - signal: Nothing
-2019-04-28 01:24:01,180 - INFO - signal: Nothing
-2019-04-28 01:26:01,219 - INFO - signal: Nothing
-2019-04-28 01:27:01,311 - INFO - signal: Nothing
-2019-04-28 01:28:01,525 - INFO - signal: Nothing
-2019-04-28 01:29:01,022 - INFO - signal: Nothing
-2019-04-28 01:34:01,152 - INFO - signal: Nothing
+2019-04-28 14:19:00,323 - INFO - signal: Nothing
+2019-04-28 14:20:00,320 - INFO - signal: Nothing
+2019-04-28 14:20:59,923 - INFO - signal: Nothing
+2019-04-28 14:22:00,228 - INFO - signal: Nothing
+2019-04-28 14:24:00,812 - INFO - signal: Nothing
+2019-04-28 14:25:59,991 - INFO - signal: Nothing
+2019-04-28 14:27:59,875 - INFO - signal: Nothing
+2019-04-28 14:29:00,230 - INFO - signal: Nothing
+2019-04-28 14:30:00,232 - INFO - signal: Nothing
+2019-04-28 14:31:00,113 - INFO - signal: Nothing
+2019-04-28 14:32:00,220 - INFO - signal: Nothing
+2019-04-28 14:33:00,022 - INFO - signal: Nothing
+2019-04-28 14:34:00,211 - INFO - signal: Nothing
+2019-04-28 14:35:00,069 - INFO - signal: Nothing
+2019-04-28 14:36:00,226 - INFO - signal: Nothing
+2019-04-28 14:37:00,244 - INFO - signal: Nothing
+2019-04-28 14:38:00,295 - INFO - signal: Nothing
+2019-04-28 14:39:00,306 - INFO - signal: Nothing
+2019-04-28 14:39:59,950 - INFO - signal: Nothing
+2019-04-28 14:41:00,278 - INFO - signal: Sell
+2019-04-28 14:41:02,215 - INFO - ========= New Order ==============
+2019-04-28 14:41:02,215 - INFO - ID     : Daxiang_j3knkVY=
+2019-04-28 14:41:02,216 - INFO - Type   : Market
+2019-04-28 14:41:02,216 - INFO - Side   : Sell
+2019-04-28 14:41:02,216 - INFO - Qty    : -105
+2019-04-28 14:41:02,216 - INFO - Price  : 5178.5
+2019-04-28 14:41:02,216 - INFO - Stop   : None
+2019-04-28 14:41:02,216 - INFO - ======================================
+2019-04-28 14:42:00,199 - INFO - signal: Nothing
+2019-04-28 14:43:00,204 - INFO - signal: Nothing
+2019-04-28 14:43:59,988 - INFO - signal: Nothing
+2019-04-28 14:45:00,012 - INFO - signal: Nothing
+2019-04-28 14:45:59,920 - INFO - signal: Nothing
+2019-04-28 14:47:00,337 - INFO - signal: Nothing
+2019-04-28 14:48:00,326 - INFO - signal: Nothing
+2019-04-28 14:49:00,035 - INFO - signal: Nothing
+2019-04-28 14:50:00,236 - INFO - signal: Nothing
+2019-04-28 14:51:01,171 - INFO - signal: Nothing
+2019-04-28 14:52:01,380 - INFO - signal: Nothing
+2019-04-28 14:53:00,887 - INFO - signal: Nothing
+2019-04-28 14:54:01,288 - INFO - signal: Nothing
+2019-04-28 14:55:01,090 - INFO - signal: Nothing
+2019-04-28 14:56:00,992 - INFO - signal: Nothing
+2019-04-28 14:57:01,075 - INFO - signal: Nothing
+2019-04-28 14:58:01,109 - INFO - signal: Nothing
+2019-04-28 14:59:01,111 - INFO - signal: Nothing
+2019-04-28 15:00:01,121 - INFO - signal: Nothing
+2019-04-28 15:01:01,020 - INFO - signal: Nothing
+2019-04-28 15:02:00,928 - INFO - signal: Nothing
+2019-04-28 15:03:01,440 - INFO - signal: Nothing
+2019-04-28 15:04:00,971 - INFO - signal: Nothing
+2019-04-28 15:05:01,350 - INFO - signal: Nothing
+2019-04-28 15:06:01,260 - INFO - signal: Nothing
+2019-04-28 15:07:01,262 - INFO - signal: Nothing
+2019-04-28 15:08:01,267 - INFO - signal: Nothing
