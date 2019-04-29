@@ -20,7 +20,7 @@ class Main():
         self.start_time = t.now()
     
     def _start_web_server(self):
-        self.server = WSGIServer((s.DASHBOARD_HOST, s.DASHBOARD_PORT), self.app, log=None)
+        self.server = WSGIServer(('', 8080), self.app, log=None)
         self.server.serve_forever()
     
     def start_web_server(self):

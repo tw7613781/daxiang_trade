@@ -12,6 +12,7 @@ API_KEY = "faQczjkhb9UQ5nv09KTjyTRQ"
 API_SECRET = "God1eB-ywL0CfhXwflkyfcB9z7XV36sbwss_JkEvf1RQqF2E"
 
 # web info for dashboard
+# put your host public ip and port here
 DASHBOARD_HOST = '127.0.0.1' 
 DASHBOARD_PORT = 8080
 

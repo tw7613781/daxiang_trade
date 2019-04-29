@@ -84,3 +84,46 @@
 2019-04-29 14:55:00,909 - INFO - signal: Nothing
 2019-04-29 15:00:04,703 - DEBUG - close price is: 5174.5
 2019-04-29 15:00:04,708 - INFO - signal: Nothing
+2019-04-29 15:05:01,849 - DEBUG - close price is: 5176.5
+2019-04-29 15:05:01,853 - INFO - signal: Nothing
+2019-04-29 15:10:01,233 - DEBUG - close price is: 5175.5
+2019-04-29 15:10:01,237 - INFO - signal: Nothing
+2019-04-29 15:15:01,982 - DEBUG - close price is: 5176.0
+2019-04-29 15:15:01,986 - INFO - signal: Nothing
+2019-04-29 15:20:01,810 - DEBUG - close price is: 5176.0
+2019-04-29 15:20:01,815 - INFO - signal: Nothing
+2019-04-29 15:25:02,035 - DEBUG - close price is: 5181.5
+2019-04-29 15:25:02,039 - INFO - signal: Nothing
+2019-04-29 15:30:00,891 - DEBUG - close price is: 5181.0
+2019-04-29 15:30:00,895 - INFO - signal: Buy
+2019-04-29 15:30:01,815 - INFO - ========= New Order ==============
+2019-04-29 15:30:01,815 - INFO - ID     : Daxiang_8cSdyGY=
+2019-04-29 15:30:01,815 - INFO - Type   : Market
+2019-04-29 15:30:01,815 - INFO - Side   : Buy
+2019-04-29 15:30:01,815 - INFO - Qty    : 103
+2019-04-29 15:30:01,815 - INFO - Price  : 5181.5
+2019-04-29 15:30:01,815 - INFO - Stop   : None
+2019-04-29 15:30:01,815 - INFO - ======================================
+2019-04-29 15:30:03,037 - INFO - ========= New Order ==============
+2019-04-29 15:30:03,037 - INFO - ID     : Daxiang_ej7jNx8=
+2019-04-29 15:30:03,037 - INFO - Type   : Market
+2019-04-29 15:30:03,037 - INFO - Side   : Buy
+2019-04-29 15:30:03,037 - INFO - Qty    : 103
+2019-04-29 15:30:03,037 - INFO - Price  : 5181.5
+2019-04-29 15:30:03,037 - INFO - Stop   : None
+2019-04-29 15:30:03,037 - INFO - ======================================
+2019-04-29 15:35:06,974 - ERROR - 400 Bad Request: {'error': {'message': 'This request has expired - `expires` is in the past. Current time: 1556519706', 'name': 'HTTPError'}}
+2019-04-29 15:40:00,879 - DEBUG - close price is: 5178.5
+2019-04-29 15:40:00,889 - INFO - signal: Nothing
+2019-04-29 15:45:02,204 - DEBUG - close price is: 5178.0
+2019-04-29 15:45:02,208 - INFO - signal: Nothing
+2019-04-29 15:50:01,859 - DEBUG - close price is: 5179.5
+2019-04-29 15:50:01,862 - INFO - signal: Nothing
+2019-04-29 15:55:01,879 - DEBUG - close price is: 5179.5
+2019-04-29 15:55:01,883 - INFO - signal: Nothing
+2019-04-29 16:00:01,932 - DEBUG - close price is: 5180.0
+2019-04-29 16:00:01,936 - INFO - signal: Nothing
+2019-04-29 16:05:02,132 - DEBUG - close price is: 5181.5
+2019-04-29 16:05:02,136 - INFO - signal: Nothing
+2019-04-29 16:10:02,206 - DEBUG - close price is: 5181.0
+2019-04-29 16:10:02,210 - INFO - signal: Nothing
