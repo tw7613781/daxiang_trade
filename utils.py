@@ -75,11 +75,39 @@ def to_data_frame(data, reverse):
         data_frame = data_frame.iloc[::-1]
     return data_frame
 
+def read_log(file):
+    '''
+    read a log file line by line, return a html formatted string
+    '''
+    text = ''
+    with open(file,'r') as f:
+        line = f.readline()
+        text += line
+        text += '<br>'
+        while line:
+            line = f.readline()
+            text += line
+            text += '<br>'    
+    return text
+
+def href_wrapper(file):
+    '''
+    return a html formatted string for href
+    '''
+    return f'<a href="http://{s.DASHBOARD_HOST}:{s.DASHBOARD_PORT}/log/{file}">{file}</a>'
+
 def random_str():
     '''
     generate a random string
     '''
     return base64.b64encode(os.urandom(5)).decode()
+
+def change_rate(a, b):
+    '''
+    calculate change rate from a to b
+    return percentage with 2 digits
+    '''
+    return round(float((b-a)/a * 100), 2)
 
 def logging_order(id, type, side, qty, price=None, stop=None):
     logger.info(f"========= New Order ==============")

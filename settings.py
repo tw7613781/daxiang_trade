@@ -11,6 +11,10 @@ TEST= True
 API_KEY = "faQczjkhb9UQ5nv09KTjyTRQ"
 API_SECRET = "God1eB-ywL0CfhXwflkyfcB9z7XV36sbwss_JkEvf1RQqF2E"
 
+# web info for dashboard
+DASHBOARD_HOST = '127.0.0.1' 
+DASHBOARD_PORT = 8080
+
 ########################################################################################################################
 # Target
 ########################################################################################################################
@@ -18,7 +22,8 @@ API_SECRET = "God1eB-ywL0CfhXwflkyfcB9z7XV36sbwss_JkEvf1RQqF2E"
 # Instrument.
 SYMBOL = "XBTUSD"
 # Candle interval for ohlcv data
-BIN_SIZE = "1m"
+# Available size:'1m','5m','1h','1d'
+BIN_SIZE = "5m"
 # Interval
 INTERVAL = {
     '1m': 1 * 60,
@@ -37,4 +42,4 @@ RATE = 0.5
 
 # Logging Level
 # CRITICAL, ERROR, WARNING, INFO, DEBUG
-LOG_LEVEL = 'INFO'
+LOG_LEVEL = 'DEBUG'

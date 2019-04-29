@@ -20,7 +20,7 @@ class Portfolio:
         self.leverage = s.LEVERAGE
         self.data.set_leverage(self.leverage)
         self.bin = s.BIN_SIZE
-        self.balance = [(t.now(), self.data.get_wallet_balance(), 0)]
+        self.balance = [(t.now(), self.data.get_wallet_balance(), 0, 0)]
     
     def get_qty(self):
         '''
@@ -35,6 +35,7 @@ class Portfolio:
         main process of portfolio
         '''
         ohlcv = self.data.get_latest_ohlcv(self.bin, 50)
+        logger.debug(f'close price is: {ohlcv.close.values[-1]}')
         signal = MACD(ohlcv)
         logger.info(f'signal: {signal}')
         current_position = self.data.get_current_position()[0]
@@ -52,8 +53,11 @@ class Portfolio:
         current_balance = self.data.get_wallet_balance()
         previous_balance = self.balance[-1][1]
         if current_balance != previous_balance:
-            self.balance.append((t.now(), current_balance, 
-            round((current_balance - previous_balance)/previous_balance,4)))
+            self.balance.append(
+                (t.now(), 
+                current_balance,
+                u.change_rate(previous_balance, current_balance),
+                u.change_rate(self.balance[0][1], current_balance)))
     
     def portfolio_info(self):
         '''
