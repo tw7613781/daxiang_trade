@@ -15,7 +15,7 @@ The main structure is consist of blew 4 componenets:
 - settings: control the system by params
 
 ## Available strategy
-- MACD
+- [MACD](https://github.com/tw7613781/daxiang_trade/blob/master/strategy.py)
 
 ## Dependencies
 All python dependencies is in [requirements.txt](https://github.com/tw7613781/daxiang_trade/blob/master/requirements.txt)
@@ -67,6 +67,6 @@ Now it's able to check out the dashboard at your aws ec2 instance public address
 Special thanks for project [ebisu](https://github.com/noda-sin/ebisu), Bitmex sample project [sample-market-maker](https://github.com/BitMEX/sample-market-maker) and Bitmex [connector](https://github.com/BitMEX/api-connectors), I studied a lot from these projects.
 
 ## TO-DOs:
-1. Change current poll way of fetching ohlcv data to bitmex-websocket. The way is more stable and not easy for http error, and it's more time sentitive.
-2. Backtest function
-3. More strateges
+- Change current poll way of fetching ohlcv data to bitmex-websocket. The way is more stable and not easy for http error, and it's more time sentitive.
+- Backtest function
+- More strateges
