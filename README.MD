@@ -1,4 +1,4 @@
-## Daxiang Trading Robot - a auto trading system for Bitmex    
+## Daxiang Trading Robot - a auto trading system for Bitmex (Alpha version)    
 [demo](http://52.78.117.239/)
 
 ## Introduction    
