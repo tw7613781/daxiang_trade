@@ -77,13 +77,10 @@ def read_log(file):
     text = ''
     if not os.path.isfile(file): return text
     with open(file,'r') as f:
-        line = f.readline()
+        lines = f.readlines()
+    for line in lines:
         text += line
-        text += '<br>'
-        while line:
-            line = f.readline()
-            text += line
-            text += '<br>'    
+        text += '<br>'   
     return text
 
 def read_recent_log(file, offset):
@@ -96,21 +93,17 @@ def read_recent_log(file, offset):
     with open(file, 'rb') as f:
         try:
             f.seek(offset, os.SEEK_END)
-            line = f.readline().decode()
-            text += line
-            text += '<br>'
-            while line:
-                line = f.readline().decode()
-                text += line
-                text += '<br>' 
+            lines = f.readlines()
+            lines = lines[::-1]
+            for line in lines:
+                text += line.decode()
+                text += '<br>'
         except OSError:
-            line = f.readline().decode()
-            text += line
-            text += '<br>'
-            while line:
-                line = f.readline().decode()
-                text += line
-                text += '<br>'              
+            lines = f.readlines()
+            lines = lines[::-1]
+            for line in lines:
+                text += line.decode()
+                text += '<br>'           
     return text
 
 def href_wrapper(file):

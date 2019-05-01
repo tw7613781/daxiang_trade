@@ -1,2 +1,8 @@
 2019-05-02 01:01:00,978 - DEBUG - close price is: 5312.0
 2019-05-02 01:01:00,985 - INFO - signal: Nothing
+2019-05-02 01:48:01,304 - DEBUG - close price is: 5299.0
+2019-05-02 01:48:01,315 - INFO - signal: Nothing
+2019-05-02 01:49:01,389 - DEBUG - close price is: 5299.0
+2019-05-02 01:49:01,395 - INFO - signal: Nothing
+2019-05-02 01:50:00,883 - DEBUG - close price is: 5299.5
+2019-05-02 01:50:00,888 - INFO - signal: Nothing
