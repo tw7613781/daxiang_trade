@@ -24,7 +24,7 @@ DASHBOARD_PORT = 8080
 SYMBOL = "XBTUSD"
 # Candle interval for ohlcv data
 # Available size:'1m','5m','1h','1d'
-BIN_SIZE = "5m"
+BIN_SIZE = "1m"
 # Interval
 INTERVAL = {
     '1m': 1 * 60,

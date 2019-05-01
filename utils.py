@@ -2,7 +2,6 @@ import time
 import os
 import base64
 import logging
-from logging.handlers import TimedRotatingFileHandler
 import pandas as pd
 import settings as s
 from bravado.exception import HTTPError
@@ -12,12 +11,8 @@ def get_logger(name, log_level=s.LOG_LEVEL):
     customize logger format
     '''
     formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(message)s')
-
-    logname = 'log/daxiang_robot.log'
-    handler = TimedRotatingFileHandler(logname, when='midnight', interval=1)
-    handler.suffix = '%Y%m%d'
+    handler = logging.FileHandler('daxiang_robot.log')
     handler.setFormatter(formatter)
-
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
     logger.addHandler(handler)
@@ -80,6 +75,7 @@ def read_log(file):
     read a log file line by line, return a html formatted string
     '''
     text = ''
+    if not os.path.isfile(file): return text
     with open(file,'r') as f:
         line = f.readline()
         text += line
@@ -90,11 +86,38 @@ def read_log(file):
             text += '<br>'    
     return text
 
+def read_recent_log(file, offset):
+    '''
+    read log from botton with offset
+    offset: should be negative, and it refers bytes
+    '''
+    text = ''
+    if not os.path.isfile(file): return text
+    with open(file, 'rb') as f:
+        try:
+            f.seek(offset, os.SEEK_END)
+            line = f.readline().decode()
+            text += line
+            text += '<br>'
+            while line:
+                line = f.readline().decode()
+                text += line
+                text += '<br>' 
+        except OSError:
+            line = f.readline().decode()
+            text += line
+            text += '<br>'
+            while line:
+                line = f.readline().decode()
+                text += line
+                text += '<br>'              
+    return text
+
 def href_wrapper(file):
     '''
     return a html formatted string for href
     '''
-    return f'<a href="http://{s.DASHBOARD_HOST}:{s.DASHBOARD_PORT}/log/{file}">{file}</a>'
+    return f'<a href="http://{s.DASHBOARD_HOST}:{s.DASHBOARD_PORT}/log">{file}</a>'
 
 def random_str():
     '''

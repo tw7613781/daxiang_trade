@@ -33,10 +33,10 @@ class Main():
         register route without decorator
         '''
         self.app.add_url_rule('/', 'index', self.index)
-        self.app.add_url_rule('/log/<name>', 'log', self.log)
+        self.app.add_url_rule('/log', 'log', self.log)
 
-    def log(self, name):
-        return u.read_log(f'log/{name}')
+    def log(self):
+        return u.read_log('daxiang_robot.log')
     
     def index(self):
         balance, position = self.p.portfolio_info()
@@ -48,13 +48,11 @@ class Main():
             text += f'{b[0]}: {b[1]/100000000}, {b[2]}%, {b[3]}% <br>'
         text += '<br><hr>'
         text += 'Recent System Log: <br>'
-        text += u.read_log('log/daxiang_robot.log')
+        text += u.read_recent_log('daxiang_robot.log', -1024*10)
         text += '<hr>'
-        text += 'History System Log: <br>'
-        for file in os.listdir('log'):
-            if file.startswith("daxiang_robot"):
-                text += u.href_wrapper(file)
-                text += '<br>'
+        text += 'Full System Log: <br>'
+        text += u.href_wrapper('daxiang_robot.log')
+        text += '<br>'
         return text
 
 if __name__ == '__main__':
