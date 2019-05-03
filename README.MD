@@ -11,8 +11,17 @@ The main structure is consist of blew 4 componenets:
 - data_livetrade: talk with Bitbix restful API. Fetch ohlcv data source and give orders. 
 - strategy: give a signal (buy, sell, nothing) based on data source .
 - portfolio: manage the account's portfolio. give exact amount of order base on strategy.
-- main: the system entry point and provide a dashboard to check system performance.
-- settings: control the system by params
+- web: provide a dashboard to display the portfolio performance
+- main: the system entry point
+- settings: control the system by params     
+
+For more info, please read [system modularity](https://github.com/tw7613781/daxiang_trade/wiki/system-modularity)
+
+## How to run the system  
+
+```python
+python3 main.py
+```
 
 ## Available strategy
 - [MACD](https://github.com/tw7613781/daxiang_trade/blob/master/strategy.py)

@@ -1,9 +1,6 @@
 '''
 By utilizing Data class and stratedy methods, the Portfolio will manage risk and be a portal to the system as well
 '''
-
-from data_livetrade import Data
-from strategy import MACD
 from datetime import datetime as t
 import settings as s
 import utils as u
@@ -14,13 +11,20 @@ logger = u.get_logger(__name__)
 
 class Portfolio:
     
-    def __init__(self):
-        self.data = Data()
+    def __init__(self, strategy, data):
+        '''
+        initial portfolio instance with strategy instance and data instance
+        '''
+        self.data = data
+        self.strategy = strategy
         self.rate = s.RATE
         self.leverage = s.LEVERAGE
-        self.data.set_leverage(self.leverage)
         self.bin = s.BIN_SIZE
         self.balance = [(t.now(), self.data.get_wallet_balance(), 0, 0)]
+        self.set_leverage(self.leverage)
+    
+    def set_leverage(self, leverage):
+        self.data.set_leverage(leverage)
     
     def get_qty(self):
         '''
@@ -36,7 +40,7 @@ class Portfolio:
         '''
         ohlcv = self.data.get_latest_ohlcv(self.bin, 50)
         logger.debug(f'close price is: {ohlcv.close.values[-1]}')
-        signal = MACD(ohlcv)
+        signal = self.strategy.MACD(ohlcv)
         logger.info(f'signal: {signal}')
         current_position = self.data.get_current_position()[0]
         if signal == 'Buy':
@@ -50,6 +54,9 @@ class Portfolio:
             qty = self.get_qty()
             self.data.sell(qty)
         else: pass
+        self.update_balance()
+
+    def update_balance(self):
         current_balance = self.data.get_wallet_balance()
         previous_balance = self.balance[-1][1]
         if current_balance != previous_balance:
