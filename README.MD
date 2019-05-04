@@ -24,7 +24,8 @@ python3 main.py
 ```
 
 ## Available strategy
-- [MACD](https://github.com/tw7613781/daxiang_trade/blob/master/strategy.py)
+- [MACD](https://github.com/tw7613781/daxiang_trade/blob/master/strategy.py)   
+- [RSI](https://github.com/tw7613781/daxiang_trade/blob/master/strategy.py)
 
 ## Dependencies
 All python dependencies is in [requirements.txt](https://github.com/tw7613781/daxiang_trade/blob/master/requirements.txt)
