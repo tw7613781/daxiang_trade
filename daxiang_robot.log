@@ -1,70 +1,16 @@
-2019-05-03 12:36:01,023 - DEBUG - close price is: 5493.0
-2019-05-03 12:36:01,035 - INFO - signal: Nothing
-2019-05-03 12:37:01,388 - DEBUG - close price is: 5491.5
-2019-05-03 12:37:01,393 - INFO - signal: Nothing
-2019-05-03 12:38:01,202 - DEBUG - close price is: 5490.0
-2019-05-03 12:38:01,207 - INFO - signal: Nothing
-2019-05-03 12:39:00,939 - DEBUG - close price is: 5476.5
-2019-05-03 12:39:00,945 - INFO - signal: Nothing
-2019-05-03 12:40:00,934 - DEBUG - close price is: 5476.0
-2019-05-03 12:40:00,939 - INFO - signal: Nothing
-2019-05-03 12:41:01,320 - DEBUG - close price is: 5479.5
-2019-05-03 12:41:01,325 - INFO - signal: Nothing
-2019-05-03 12:42:01,135 - DEBUG - close price is: 5480.5
-2019-05-03 12:42:01,141 - INFO - signal: Nothing
-2019-05-03 12:43:01,046 - DEBUG - close price is: 5480.0
-2019-05-03 12:43:01,054 - INFO - signal: Nothing
-2019-05-03 12:44:00,816 - DEBUG - close price is: 5483.0
-2019-05-03 12:44:00,821 - INFO - signal: Nothing
-2019-05-03 12:45:01,246 - DEBUG - close price is: 5480.0
-2019-05-03 12:45:01,251 - INFO - signal: Nothing
-2019-05-03 12:46:01,057 - DEBUG - close price is: 5484.0
-2019-05-03 12:46:01,063 - INFO - signal: Nothing
-2019-05-03 12:47:00,838 - DEBUG - close price is: 5485.5
-2019-05-03 12:47:00,845 - INFO - signal: Nothing
-2019-05-03 12:48:01,254 - DEBUG - close price is: 5485.5
-2019-05-03 12:48:01,259 - INFO - signal: Buy
-2019-05-03 12:48:02,246 - INFO - ========= New Order ==============
-2019-05-03 12:48:02,246 - INFO - ID     : Daxiang_4zPuiTs=
-2019-05-03 12:48:02,246 - INFO - Type   : Market
-2019-05-03 12:48:02,246 - INFO - Side   : Sell
-2019-05-03 12:48:02,246 - INFO - Qty    : -77
-2019-05-03 12:48:02,246 - INFO - Price  : 5484.5
-2019-05-03 12:48:02,247 - INFO - Stop   : None
-2019-05-03 12:48:02,247 - INFO - ======================================
-2019-05-03 12:48:03,486 - INFO - ========= New Order ==============
-2019-05-03 12:48:03,487 - INFO - ID     : Daxiang_m7+Wzf0=
-2019-05-03 12:48:03,487 - INFO - Type   : Market
-2019-05-03 12:48:03,487 - INFO - Side   : Buy
-2019-05-03 12:48:03,487 - INFO - Qty    : 76
-2019-05-03 12:48:03,487 - INFO - Price  : 5485.5
-2019-05-03 12:48:03,487 - INFO - Stop   : None
-2019-05-03 12:48:03,487 - INFO - ======================================
-2019-05-03 12:49:01,056 - DEBUG - close price is: 5484.5
-2019-05-03 12:49:01,061 - INFO - signal: Nothing
-2019-05-03 12:50:00,868 - DEBUG - close price is: 5484.5
-2019-05-03 12:50:00,874 - INFO - signal: Nothing
-2019-05-03 12:51:01,245 - DEBUG - close price is: 5484.5
-2019-05-03 12:51:01,250 - INFO - signal: Nothing
-2019-05-03 12:52:01,054 - DEBUG - close price is: 5480.0
-2019-05-03 12:52:01,059 - INFO - signal: Nothing
-2019-05-03 12:53:00,834 - DEBUG - close price is: 5480.0
-2019-05-03 12:53:00,839 - INFO - signal: Nothing
-2019-05-03 12:54:01,242 - DEBUG - close price is: 5482.5
-2019-05-03 12:54:01,248 - INFO - signal: Nothing
-2019-05-03 12:55:01,165 - DEBUG - close price is: 5482.5
-2019-05-03 12:55:01,170 - INFO - signal: Nothing
-2019-05-03 12:56:00,981 - DEBUG - close price is: 5482.5
-2019-05-03 12:56:00,986 - INFO - signal: Nothing
-2019-05-03 12:57:01,356 - DEBUG - close price is: 5483.0
-2019-05-03 12:57:01,361 - INFO - signal: Nothing
-2019-05-03 12:58:01,277 - DEBUG - close price is: 5481.5
-2019-05-03 12:58:01,283 - INFO - signal: Nothing
-2019-05-03 12:59:01,207 - DEBUG - close price is: 5482.0
-2019-05-03 12:59:01,213 - INFO - signal: Nothing
-2019-05-03 13:00:01,026 - DEBUG - close price is: 5481.5
-2019-05-03 13:00:01,032 - INFO - signal: Nothing
-2019-05-03 13:01:00,957 - DEBUG - close price is: 5482.5
-2019-05-03 13:01:00,965 - INFO - signal: Nothing
-2019-05-03 13:02:01,320 - DEBUG - close price is: 5482.5
-2019-05-03 13:02:01,327 - INFO - signal: Nothing
+2019-05-04 23:32:01,905 - DEBUG - close price is: 157.85
+2019-05-04 23:32:01,917 - INFO - signal: Nothing
+2019-05-04 23:33:04,463 - DEBUG - close price is: 158.1
+2019-05-04 23:33:04,469 - INFO - signal: Nothing
+2019-05-04 23:34:01,204 - DEBUG - close price is: 158.1
+2019-05-04 23:34:01,210 - INFO - signal: Nothing
+2019-05-04 23:35:01,222 - DEBUG - close price is: 158.35
+2019-05-04 23:35:01,228 - INFO - signal: Sell
+2019-05-04 23:36:01,356 - DEBUG - close price is: 158.85
+2019-05-04 23:36:01,363 - INFO - signal: Sell
+2019-05-04 23:37:00,874 - DEBUG - close price is: 159.4
+2019-05-04 23:37:00,884 - INFO - signal: Sell
+2019-05-04 23:38:01,174 - DEBUG - close price is: 159.4
+2019-05-04 23:38:01,180 - INFO - signal: Sell
+2019-05-04 23:39:01,458 - DEBUG - close price is: 159.4
+2019-05-04 23:39:01,468 - INFO - signal: Sell

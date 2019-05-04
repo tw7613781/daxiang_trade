@@ -15,5 +15,5 @@ if __name__ == '__main__':
     web = Web(portfolio)
     while True:
         if round(time()) % s.INTERVAL[s.BIN_SIZE] == 1:
-            portfolio.run()
+            portfolio.portfolio_rsi()
         sleep(0.5)

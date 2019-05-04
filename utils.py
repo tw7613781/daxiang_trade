@@ -147,6 +147,20 @@ def change_rate(a, b):
 ########################################################################################################################
 # Basic technical analysis
 ########################################################################################################################
+def crossover(a, b):
+    return a[-2] < b[-2] and a[-1] > b[-1]
+
+def crossunder(a, b):
+    return a[-2] > b[-2] and a[-1] < b[-1]
+
+def ema(series, periods, fillna=False):
+    if fillna:
+        return series.ewm(span=periods, min_periods=0).mean()
+    return series.ewm(span=periods, min_periods=periods).mean()
+
+def sma(series, periods):
+    return series.rolling(periods).mean()
+
 def macd(df, n_fast=12, n_slow=26, n_signal=9):
     """Calculate MACD, MACD Signal and MACD difference
     :param df: pandas.DataFrame
@@ -155,18 +169,24 @@ def macd(df, n_fast=12, n_slow=26, n_signal=9):
     :param n_signal:
     :return: pandas.DataFrame
     """
-    EMAfast = pd.Series(df['close'].ewm(span=n_fast, min_periods=n_slow).mean())
-    EMAslow = pd.Series(df['close'].ewm(span=n_slow, min_periods=n_slow).mean())
+    EMAfast = ema(df.close, n_fast)
+    EMAslow = ema(df.close, n_slow)
     MACD = pd.Series(EMAfast - EMAslow, name='macd')
-    MACD_signal = pd.Series(MACD.ewm(span=n_signal, min_periods=n_signal).mean(), name='macd_signal')
+    MACD_signal = pd.Series(ema(MACD, n_signal), name='macd_signal')
     MACD_diff = pd.Series(MACD - MACD_signal, name='macd_diff')
     df = df.join(MACD)
     df = df.join(MACD_signal)
     df = df.join(MACD_diff)
     return df
 
-def crossover(a, b):
-    return a[-2] < b[-2] and a[-1] > b[-1]
-
-def crossunder(a, b):
-    return a[-2] > b[-2] and a[-1] < b[-1]
+def rsi(df, n=14):
+    close = df.close
+    diff = close.diff(1)
+    which_dn = diff < 0
+    up, dn = diff, diff*0
+    up[which_dn], dn[which_dn] = 0, -up[which_dn]
+    emaup = ema(up, n)
+    emadn = ema(dn, n)
+    RSI = pd.Series(100 * emaup / (emaup + emadn), name='rsi')
+    df = df.join(RSI)
+    return df

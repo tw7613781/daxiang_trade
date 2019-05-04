@@ -22,3 +22,14 @@ class Strategy:
             return 'Sell'
         else:
             return 'Nothing'
+
+    def RSI(self, df, fast=12, slow=24):
+        df = u.rsi(df)
+        sma_fast = u.sma(df.close, fast).values[-1]
+        sma_slow = u.sma(df.close, slow).values[-1]
+        current_rsi = df.rsi.values[-1]
+        if current_rsi < 30 and sma_fast > sma_slow:
+            return 'Buy'
+        elif current_rsi > 70:
+            return 'Sell'
+        else: return 'Nothing'

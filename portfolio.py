@@ -34,7 +34,7 @@ class Portfolio:
         price = self.data.get_market_price()
         return math.floor(margin / 100000000 * price * self.leverage * self.rate)
 
-    def run(self):
+    def portfolio_macd(self):
         '''
         main process of portfolio
         '''
@@ -55,6 +55,28 @@ class Portfolio:
             self.data.sell(qty)
         else: pass
         self.update_balance()
+    
+    def portfolio_rsi(self):
+        '''
+        alternative portfolio
+        '''
+        ohlcv = self.data.get_latest_ohlcv(self.bin, 50)
+        logger.debug(f'close price is: {ohlcv.close.values[-1]}')
+        signal = self.strategy.RSI(ohlcv)
+        logger.info(f'signal: {signal}')
+        current_position = self.data.get_current_position()[0]
+        if signal == 'Buy':
+            if current_position < 0:
+                self.data.order(-current_position)
+                qty = self.get_qty()
+                self.data.buy(qty)
+        elif signal == 'Sell':
+            if current_position > 0:
+                self.data.order(-current_position)
+                qty = self.get_qty()
+                self.data.sell(qty)
+        else: pass
+        self.update_balance()      
 
     def update_balance(self):
         current_balance = self.data.get_wallet_balance()

@@ -21,7 +21,7 @@ DASHBOARD_PORT = 8080
 ########################################################################################################################
 
 # Instrument.
-SYMBOL = "XBTUSD"
+SYMBOL = "ETHUSD"
 # Candle interval for ohlcv data
 # Available size:'1m','5m','1h','1d'
 BIN_SIZE = "1m"
