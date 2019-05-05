@@ -21,7 +21,7 @@ DASHBOARD_PORT = 8080
 ########################################################################################################################
 
 # Instrument.
-SYMBOL = "ETHUSD"
+SYMBOL = "XBTUSD"
 # Candle interval for ohlcv data
 # Available size:'1m','5m','1h','1d'
 BIN_SIZE = "1m"
@@ -32,6 +32,13 @@ INTERVAL = {
     '1h': 60 * 60,
     '1d': 24 * 60 * 60
     }
+# Websocket
+NAME_WS = {
+    '1m': 'tradeBin1m',
+    '5m': 'tradeBin5m',
+    '1h': 'tradeBin1h',
+    '1d': 'tradeBin1d'   
+}
 # Leverage x
 LEVERAGE= 5
 # rate = order amount / total balance
