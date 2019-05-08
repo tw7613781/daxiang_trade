@@ -1,5 +1,8 @@
-## Daxiang Trading Robot - a auto trading system for Bitmex    
+## Daxiang Trading Robot - a auto trading system for Bitmex   
 [demo](http://52.78.117.239/)
+
+## Disclaimer    
+The project is only for study purpose, nothing contained in the Site constitutes investment, legal or tax advice. Neither the information nor any opinion contained in the Site constitutes a solicitation or an offer to buy or sell any securities, futures, options or other financial instruments. Decisions based on information contained on this site are the sole responsibility of the visitor.
 
 ## Introduction    
 - Simple strategy, robust system, plus risk management are the three characteristics of Daxiang trading robot.      
