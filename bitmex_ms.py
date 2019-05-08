@@ -34,7 +34,6 @@ def generate_signature(secret, verb, url, nonce, data):
 class BitMexWs:
     
     def __init__(self):
-        self.is_running = True
         self.testnet = s.TEST
         if self.testnet:
             domain = 'testnet.bitmex.com'
@@ -45,12 +44,9 @@ class BitMexWs:
                              on_message=self.__on_message,
                              on_error=self.__on_error,
                              on_close=self.__on_close,
+                             on_open=self.__on_open,
                              header=self.__get_auth())
-        self.__start()
-
-    def __start(self):
-        while self.is_running:
-            self.ws.run_forever()
+        self.ws.run_forever()
     
     def __get_auth(self):
         api_key = s.API_KEY
@@ -105,19 +101,11 @@ class BitMexWs:
             logger.error(traceback.format_exc())
 
     def __on_close(self, ws):
-        if self.is_running:
-            logger.info("Websocket restart")
-            self.ws = websocket.WebSocketApp(self.endpoint,
-                                    on_message=self.__on_message,
-                                    on_error=self.__on_error,
-                                    on_close=self.__on_close,
-                                    header=self.__get_auth())
-            self.ws.run_forever()
-
-    def close(self):
-        self.is_running = False
+        logger.info('bitmex websocket closed')
         self.ws.close()
+
+    def __on_open(self, ws):
+        logger.info('bitmex websocket opened')
 
 if __name__ == '__main__':
     ws = BitMexWs()
-    
