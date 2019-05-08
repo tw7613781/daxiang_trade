@@ -14,11 +14,14 @@ def get_logger(name, log_level=s.LOG_LEVEL):
     customize logger format
     '''
     formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(message)s')
-    handler = logging.FileHandler('daxiang_robot.log')
-    handler.setFormatter(formatter)
+    file_handler = logging.FileHandler('daxiang_robot.log')
+    file_handler.setFormatter(formatter)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
-    logger.addHandler(handler)
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
     return logger
 
 logger = get_logger(__name__)
