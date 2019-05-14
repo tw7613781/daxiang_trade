@@ -3,7 +3,7 @@ Daxiang trading robot main entry
 '''
 from portfolio import Portfolio
 from strategy import Strategy
-from data_livetrade import Data
+from data import Data
 from web import Web
 from time import time, sleep
 import settings as s
@@ -13,7 +13,10 @@ if __name__ == '__main__':
     strategy = Strategy()
     portfolio = Portfolio(strategy, data)
     web = Web(portfolio)
-    while True:
-        if round(time()) % s.INTERVAL[s.BIN_SIZE] == 1:
-            portfolio.portfolio_rsi()
-        sleep(0.5)
+    try:
+        while True:
+            if round(time()) % s.INTERVAL[s.BIN_SIZE] == 1:
+                portfolio.portfolio_macd()
+            sleep(0.5)
+    except KeyboardInterrupt:
+        data.close()            

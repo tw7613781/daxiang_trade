@@ -49,9 +49,9 @@ class Web:
         return u.read_log('daxiang_robot.log')
     
     def index(self):
-        balance, position = self.p.portfolio_info()
+        balance, position, entry_price = self.p.portfolio_info()
         text = f'Daxiang Trading Robot - Uptime {t.now() - self.start_time} <br><hr>'
-        text += f'Current Position: {position[0]}, Average Price: {position[1]} <br>'
+        text += f'Current Position: {position}, Average Price: {entry_price} <br>'
         text += 'Profit History: <br>'
         text += '---------------------- Balance(XBT) -- Change_Rate -- Total_Change_Rate<br>'
         for b in balance:

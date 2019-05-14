@@ -42,7 +42,7 @@ class Portfolio:
         logger.debug(f'close price is: {ohlcv.close.values[-1]}')
         signal = self.strategy.MACD(ohlcv)
         logger.info(f'signal: {signal}')
-        current_position = self.data.get_current_position()[0]
+        current_position = self.data.get_current_qty()
         if signal == 'Buy':
             if current_position != 0:
                 self.data.order(-current_position)
@@ -64,7 +64,7 @@ class Portfolio:
         logger.debug(f'close price is: {ohlcv.close.values[-1]}')
         signal = self.strategy.RSI(ohlcv)
         logger.info(f'signal: {signal}')
-        current_position = self.data.get_current_position()[0]
+        current_position = self.data.get_current_qty()
         if signal == 'Buy':
             if current_position < 0:
                 self.data.order(-current_position)
@@ -93,4 +93,4 @@ class Portfolio:
         返回收益和持仓
         return profit and current position
         '''
-        return self.balance, self.data.get_current_position()
+        return self.balance, self.data.get_current_qty(), self.data.get_avg_entry_price()
