@@ -6,6 +6,7 @@ import time
 import traceback
 import urllib
 import websocket
+import threading
 from datetime import datetime
 
 import settings as s
@@ -33,6 +34,8 @@ def generate_signature(secret, verb, url, nonce, data):
 
 class BitMexWs:
     
+    is_running = True
+
     def __init__(self):
         self.testnet = s.TEST
         if self.testnet:
@@ -46,8 +49,14 @@ class BitMexWs:
                              on_close=self.__on_close,
                              on_open=self.__on_open,
                              header=self.__get_auth())
-        self.ws.run_forever()
-    
+        self.wst = threading.Thread(target=self.__start)
+        self.wst.daemon = True
+        self.wst.start()
+
+    def __start(self):
+        while self.is_running:
+            self.ws.run_forever()
+
     def __get_auth(self):
         api_key = s.API_KEY
         api_secret = s.API_SECRET
@@ -101,11 +110,29 @@ class BitMexWs:
             logger.error(traceback.format_exc())
 
     def __on_close(self, ws):
-        logger.info('bitmex websocket closed')
-        self.ws.close()
+        if self.is_running:
+            logger.info("Websocket restart")
+            self.ws = websocket.WebSocketApp(self.endpoint,
+                                 on_message=self.__on_message,
+                                 on_error=self.__on_error,
+                                 on_close=self.__on_close,
+                                 header=self.__get_auth())
+            self.wst = threading.Thread(target=self.__start)
+            self.wst.daemon = True
+            self.wst.start()
 
     def __on_open(self, ws):
         logger.info('bitmex websocket opened')
 
+    def close(self):
+        logger.info('bitmex websocket closed')
+        self.is_running = False
+        self.ws.close()
+
 if __name__ == '__main__':
     ws = BitMexWs()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        ws.close()
