@@ -1,14 +1,10 @@
 '''
 a http server to display system info
 '''
-import os
 import threading
-from portfolio import Portfolio
-import settings as s
-import utils as u
+import src.utils as u
 from flask import Flask
 from gevent.pywsgi import WSGIServer
-from time import time, sleep
 from datetime import datetime as t
 
 class Web:

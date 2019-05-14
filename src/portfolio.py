@@ -2,9 +2,8 @@
 By utilizing Data class and stratedy methods, the Portfolio will manage risk and be a portal to the system as well
 '''
 from datetime import datetime as t
-import settings as s
-import utils as u
-import pandas as pd
+import src.settings as s
+import src.utils as u
 import math
 
 logger = u.get_logger(__name__)

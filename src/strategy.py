@@ -3,8 +3,7 @@ Provide different strategys. if want to add a new one, just put here.
 params: pandas dataframe with ohlcv data
 return: signal string, 'Buy', or 'Sell', or 'Nothing'
 '''
-import pandas as pd
-import utils as u
+import src.utils as u
 
 class Strategy:
 

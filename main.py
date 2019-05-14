@@ -1,12 +1,13 @@
 '''
 Daxiang trading robot main entry
 '''
-from portfolio import Portfolio
-from strategy import Strategy
-from data import Data
-from web import Web
+from src.portfolio import Portfolio
+from src.strategy import Strategy
+from src.data import Data
+from src.web import Web
+import src.settings as s
 from time import time, sleep
-import settings as s
+
 
 if __name__ == '__main__':
     data = Data()

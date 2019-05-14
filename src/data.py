@@ -12,8 +12,8 @@ import websocket
 import threading
 from datetime import datetime
 import bitmex
-import settings as s
-import utils as u
+import src.settings as s
+import src.utils as u
 
 logger = u.get_logger(__name__)
 
@@ -38,7 +38,7 @@ def generate_signature(secret, verb, url, nonce, data):
 class Data:
     
     is_running = True
-    # below value will be updated by bitmex ws
+    # below values will be updated by bitmex ws
     excess_margin = None
     wallet_balance = None
     market_price = None

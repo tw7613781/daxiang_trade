@@ -3,7 +3,7 @@ import os
 import base64
 import logging
 import pandas as pd
-import settings as s
+import src.settings as s
 from bravado.exception import HTTPError
 
 ########################################################################################################################
