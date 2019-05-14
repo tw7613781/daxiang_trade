@@ -1,20 +1,26 @@
 ## Daxiang Trading Robot - a auto trading system for Bitmex   
+
 [demo](http://52.78.117.239/)
 
 ## Disclaimer    
+
 The project is only for study purpose, nothing contained in the Site constitutes investment, legal or tax advice. Neither the information nor any opinion contained in the Site constitutes a solicitation or an offer to buy or sell any securities, futures, options or other financial instruments. Decisions based on information contained on this site are the sole responsibility of the visitor.
 
 ## Introduction    
+
 - Simple strategy, robust system, plus risk management are the three characteristics of Daxiang trading robot.      
 - Adopting design pattern of parameterization and modularity, which means it's easier to control and scale up the system.      
 - Supports backtesting and a simple dashboard.   
 
 ## System code structure
-The main structure is consist of blew 4 componenets:  
-- data_livetrade: talk with Bitbix restful API. Fetch ohlcv data source and give orders. 
+
+The main structure is consist of blew 4 files in src directory:  
+- data: talk with Bitbix restful API and websocket. Fetch ohlcv data source and give orders. 
 - strategy: give a signal (buy, sell, nothing) based on data source .
 - portfolio: manage the account's portfolio. give exact amount of order base on strategy.
-- web: provide a dashboard to display the portfolio performance
+- web: provide a dashboard to display the portfolio performance    
+
+The other files
 - main: the system entry point
 - settings: control the system by params     
 
