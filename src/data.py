@@ -8,6 +8,8 @@ import json
 import time
 import traceback
 import urllib
+import ssl
+import sys
 import websocket
 import threading
 from datetime import datetime
@@ -54,21 +56,28 @@ class Data:
         self.endpoint = 'wss://' + domain + f'/realtime?subscribe=instrument:{s.SYMBOL},' \
                         f'margin,position:{s.SYMBOL}'
         # bitmex websocket api
-        self.ws = websocket.WebSocketApp(self.endpoint,
-                             on_message=self.__on_message,
-                             on_error=self.__on_error,
-                             on_close=self.__on_close,
-                             on_open=self.__on_open,
-                             header=self.__get_auth())
-        self.wst = threading.Thread(target=self.__start)
-        self.wst.daemon = True
-        self.wst.start()
+        self.__wsconnect()
         # bitmex restful api client
         self.client = bitmex.bitmex(test=self.testnet, api_key=s.API_KEY, api_secret=s.API_SECRET)
 
-    def __start(self):
-        while self.is_running:
-            self.ws.run_forever()
+    def __wsconnect(self):
+        ssl_defaults = ssl.get_default_verify_paths()
+        sslopt_ca_certs = {'ca_certs': ssl_defaults.cafile}
+        self.ws = websocket.WebSocketApp(self.endpoint,
+                        on_message=self.__on_message,
+                        on_error=self.__on_error,
+                        on_close=self.__on_close,
+                        on_open=self.__on_open,
+                        header=self.__get_auth())
+        self.wst = threading.Thread(target=lambda: self.ws.run_forever(sslopt=sslopt_ca_certs))
+        self.wst.daemon = True
+        self.wst.start()
+
+        # Wait for connect before continuing
+        conn_timeout = 5
+        while (not self.ws.sock or not self.ws.sock.connected) and conn_timeout:
+            time.sleep(1)
+            conn_timeout -= 1    
 
     def get_margin(self):
         '''
@@ -267,14 +276,7 @@ class Data:
     def __on_close(self, ws):
         if self.is_running:
             logger.info("Websocket restart")
-            self.ws = websocket.WebSocketApp(self.endpoint,
-                                 on_message=self.__on_message,
-                                 on_error=self.__on_error,
-                                 on_close=self.__on_close,
-                                 header=self.__get_auth())
-            self.wst = threading.Thread(target=self.__start)
-            self.wst.daemon = True
-            self.wst.start()
+            self.__wsconnect()
 
     def __on_open(self, ws):
         logger.info('bitmex websocket opened')
@@ -283,16 +285,3 @@ class Data:
         logger.info('bitmex websocket closed')
         self.is_running = False
         self.ws.close()
-
-if __name__ == '__main__':
-    data = Data()
-    try:
-        while True:
-            time.sleep(5)
-            logger.info(data.get_market_price())
-            logger.info(data.get_wallet_balance())
-            logger.info(data.get_excess_margin())
-            logger.info(data.get_current_qty())
-            logger.info(data.get_avg_entry_price())
-    except KeyboardInterrupt:
-        data.close()
