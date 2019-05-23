@@ -12,7 +12,7 @@ import ssl
 import sys
 import websocket
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 import bitmex
 import src.settings as s
 import src.utils as u
@@ -46,6 +46,7 @@ class Data:
     market_price = None
     current_qty = None
     avg_engry_price = None
+    data = None
 
     def __init__(self):
         self.testnet = s.TEST
@@ -54,7 +55,7 @@ class Data:
         else:
             domain = 'www.bitmex.com'
         self.endpoint = 'wss://' + domain + f'/realtime?subscribe=instrument:{s.SYMBOL},' \
-                        f'margin,position:{s.SYMBOL}'
+                        f'margin,position:{s.SYMBOL},tradeBin1m:{s.SYMBOL}'
         # bitmex websocket api
         self.__wsconnect()
         # bitmex restful api client
@@ -167,6 +168,11 @@ class Data:
         source = u.to_data_frame(source, reverse=True)
         return source
 
+    def update_ohlcv(self, bin_size, length, update):
+        # initial data
+        if not self.data:
+            pass
+
     def order(self, orderQty, stop=0):
         '''
         This is 'Market' order
@@ -249,9 +255,10 @@ class Data:
                 table = obj['table']
                 data = obj['data']
 
-            #     if table.startswith("tradeBin"):
-            #         data[0]['timestamp'] = datetime.strptime(data[0]['timestamp'][:-5], '%Y-%m-%dT%H:%M:%S')
-            #         logger.info(table, action, u.to_data_frame([data[0]]))
+                if table.startswith("trade"):
+                    data[0]['timestamp'] = datetime.strptime(data[0]['timestamp'][:-5], '%Y-%m-%dT%H:%M:%S')
+                    logger.debug(table)
+                    logger.debug(u.to_data_frame(data, False))
 
                 if table.startswith("instrument"):
                     if 'lastPrice' in data[0]:
