@@ -24,21 +24,16 @@ DASHBOARD_PORT = 8080
 SYMBOL = "XBTUSD"
 # Candle interval for ohlcv data
 # Available size:'1m','5m','1h','1d'
-BIN_SIZE = "1m"
+BIN_SIZE = "5m"
 # Interval
 INTERVAL = {
-    '1m': 1 * 60,
-    '5m': 5 * 60,
-    '1h': 60 * 60,
-    '1d': 24 * 60 * 60
+    '1m': [1, '1T'],
+    '5m': [5 * 1, '5T'],
+    '15m': [15 * 1, '15T'],
+    '30m': [30 * 1, '30T'],
+    '45m': [45 *1, '45T'],
+    '1h': [60 * 1, '1H']
     }
-# Websocket
-NAME_WS = {
-    '1m': 'tradeBin1m',
-    '5m': 'tradeBin5m',
-    '1h': 'tradeBin1h',
-    '1d': 'tradeBin1d'   
-}
 # Leverage x
 LEVERAGE= 5
 # rate = order amount / total balance

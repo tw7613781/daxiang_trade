@@ -123,16 +123,27 @@ def retry(func, count=5):
 ########################################################################################################################
 # List or string process
 ########################################################################################################################
-def to_data_frame(data, reverse):
+def to_data_frame(data, reverse = False):
     '''
     convert ohlcv data list to pandas frame
     reverse the frame if latest come first
     '''
     data_frame = pd.DataFrame(data, columns=["timestamp", "high", "low", "open", "close", "volume"])
     data_frame = data_frame.set_index("timestamp")
+    data_frame = data_frame.tz_localize(None).tz_localize('UTC', level=0)
     if reverse:
         data_frame = data_frame.iloc[::-1]
     return data_frame
+
+def resample(data_frame, bin_size):
+    resample_time = s.INTERVAL[bin_size][1]
+    return data_frame.resample(resample_time).agg({
+        "open": "first",
+        "high": "max",
+        "low": "min",
+        "close": "last",
+        "volume": "sum",
+    })
 
 def random_str():
     '''

@@ -21,6 +21,7 @@ class Portfolio:
         self.bin = s.BIN_SIZE
         self.balance = [(t.now(), self.data.get_wallet_balance(), 0, 0)]
         self.set_leverage(self.leverage)
+        self.data.portfolio = self.portfolio_macd
     
     def set_leverage(self, leverage):
         self.data.set_leverage(leverage)
@@ -33,11 +34,10 @@ class Portfolio:
         price = self.data.get_market_price()
         return math.floor(margin / 100000000 * price * self.leverage * self.rate)
 
-    def portfolio_macd(self):
+    def portfolio_macd(self, ohlcv):
         '''
         main process of portfolio
         '''
-        ohlcv = self.data.get_latest_ohlcv(self.bin, 50)
         logger.debug(f'close price is: {ohlcv.close.values[-1]}')
         signal = self.strategy.MACD(ohlcv)
         logger.info(f'signal: {signal}')
@@ -55,11 +55,10 @@ class Portfolio:
         else: pass
         self.update_balance()
     
-    def portfolio_rsi(self):
+    def portfolio_rsi(self, ohlcv):
         '''
         alternative portfolio
         '''
-        ohlcv = self.data.get_latest_ohlcv(self.bin, 50)
         logger.debug(f'close price is: {ohlcv.close.values[-1]}')
         signal = self.strategy.RSI(ohlcv)
         logger.info(f'signal: {signal}')

@@ -16,8 +16,6 @@ if __name__ == '__main__':
     web = Web(portfolio)
     try:
         while True:
-            if round(time()) % s.INTERVAL[s.BIN_SIZE] == 1:
-                portfolio.portfolio_macd()
             sleep(0.5)
     except KeyboardInterrupt:
         data.close()            

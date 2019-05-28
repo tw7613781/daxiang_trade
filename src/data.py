@@ -12,7 +12,8 @@ import ssl
 import sys
 import websocket
 import threading
-from datetime import datetime, timezone
+import pandas as pd
+from datetime import datetime, timezone, timedelta
 import bitmex
 import src.settings as s
 import src.utils as u
@@ -36,7 +37,6 @@ def generate_signature(secret, verb, url, nonce, data):
     signature = hmac.new(secret.encode('utf-8'), message, digestmod=hashlib.sha256).hexdigest()
     return signature
 
-
 class Data:
     
     is_running = True
@@ -47,8 +47,12 @@ class Data:
     current_qty = None
     avg_engry_price = None
     data = None
+    ohlcv_len = None
+    bin_size = None
 
     def __init__(self):
+        self.ohlcv_len = 50
+        self.bin_size = s.BIN_SIZE
         self.testnet = s.TEST
         if self.testnet:
             domain = 'testnet.bitmex.com'
@@ -56,10 +60,10 @@ class Data:
             domain = 'www.bitmex.com'
         self.endpoint = 'wss://' + domain + f'/realtime?subscribe=instrument:{s.SYMBOL},' \
                         f'margin,position:{s.SYMBOL},tradeBin1m:{s.SYMBOL}'
-        # bitmex websocket api
-        self.__wsconnect()
         # bitmex restful api client
         self.client = bitmex.bitmex(test=self.testnet, api_key=s.API_KEY, api_secret=s.API_SECRET)
+        # bitmex websocket api
+        self.__wsconnect()
 
     def __wsconnect(self):
         ssl_defaults = ssl.get_default_verify_paths()
@@ -153,25 +157,50 @@ class Data:
         '''
         return u.retry(lambda: self.client.Position.Position_updateLeverage(symbol=s.SYMBOL, leverage=leverage).result())
 
-
-    def get_latest_ohlcv(self, bin_size, length):
+    def fetch_ohlcv(self, start_time, end_time):
         '''
         get data for open-high-low-close-volumn array
         获取open-high-low-close-volumn数组数据
-        bin_size: data interval, available options: [1m,5m,1h,1d].
-        length: length must less than 750, which is the maximum size per reqeust made by Bitmex. 
-        It's enough for most strategy, if need more data we can consider using start_time and end_time
-        Found that by using start and count pair looping to fetch data is not stable
         '''
-        source = u.retry(lambda: self.client.Trade.Trade_getBucketed(symbol=s.SYMBOL, binSize=bin_size,
-                                        count=length, reverse=True).result())
-        source = u.to_data_frame(source, reverse=True)
-        return source
+        left_time = start_time
+        right_time = end_time
+        data = u.to_data_frame([])
 
-    def update_ohlcv(self, bin_size, length, update):
-        # initial data
-        if not self.data:
-            pass
+        while True:
+            source = u.retry(lambda: self.client.Trade.Trade_getBucketed(symbol=s.SYMBOL, binSize="1m",
+                                        startTime=left_time, endTime=right_time, count=500, partial=False).result())
+            if len(source) == 0:
+                break
+
+            source = u.to_data_frame(source)
+            data = pd.concat([data, source])
+
+            if right_time > source.iloc[-1].name + timedelta(minutes=1):
+                left_time = source.iloc[-1].name + timedelta(minutes=1)
+                time.sleep(1)
+            else:
+                break
+        return data
+
+    def portfolio(self, ohlcv):
+        '''
+        implemented by portfolio class
+        '''
+        pass
+
+    def update_ohlcv(self, update):
+        # initial data from RESTAPI
+        if self.data is None:
+            end_time = datetime.now(timezone.utc)
+            start_time = end_time - timedelta(minutes=self.ohlcv_len * s.INTERVAL[self.bin_size][0])
+            self.data = self.fetch_ohlcv(start_time, end_time)
+            re_sample_data = u.resample(self.data, self.bin_size)
+            self.portfolio(re_sample_data)
+        # update data from WS
+        else:
+            self.data = pd.concat([self.data, update])[1:]
+            re_sample_data = u.resample(self.data, self.bin_size)
+            self.portfolio(re_sample_data)
 
     def order(self, orderQty, stop=0):
         '''
@@ -257,8 +286,7 @@ class Data:
 
                 if table.startswith("trade"):
                     data[0]['timestamp'] = datetime.strptime(data[0]['timestamp'][:-5], '%Y-%m-%dT%H:%M:%S')
-                    logger.debug(table)
-                    logger.debug(u.to_data_frame(data, False))
+                    self.update_ohlcv(u.to_data_frame(data))
 
                 if table.startswith("instrument"):
                     if 'lastPrice' in data[0]:
