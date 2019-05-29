@@ -38,9 +38,8 @@ class Portfolio:
         '''
         main process of portfolio
         '''
-        logger.debug(f'close price is: {ohlcv.close.values[-1]}')
         signal = self.strategy.MACD(ohlcv)
-        logger.info(f'signal: {signal}')
+        logger.debug(f'signal: {signal}')
         current_position = self.data.get_current_qty()
         if signal == 'Buy':
             if current_position != 0:

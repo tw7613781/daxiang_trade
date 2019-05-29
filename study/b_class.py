@@ -4,7 +4,7 @@ class B:
 
     def __init__(self, a):
         self.a = a
-        self.a.to_be_defined = self.func_3
+        self.a.to_be_defined = self.lala
     def func_3(self, a):
         print(self.a.height)
         print('i am func 3: ' + str(a))
@@ -13,8 +13,11 @@ class B:
         self.a.height = 10
         self.a.func()
         self.a.func_2()
+    
+    def lala(self, a):
+        print('hahahah: ', str(a))
 
 
 a = A()
 b = B(a)
-b.display()
+b.a.func_2()

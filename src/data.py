@@ -51,7 +51,7 @@ class Data:
     bin_size = None
 
     def __init__(self):
-        self.ohlcv_len = 50
+        self.ohlcv_len = 100
         self.bin_size = s.BIN_SIZE
         self.testnet = s.TEST
         if self.testnet:
@@ -82,7 +82,7 @@ class Data:
         conn_timeout = 5
         while (not self.ws.sock or not self.ws.sock.connected) and conn_timeout:
             time.sleep(1)
-            conn_timeout -= 1    
+            conn_timeout -= 1   
 
     def get_margin(self):
         '''
@@ -194,13 +194,14 @@ class Data:
             end_time = datetime.now(timezone.utc)
             start_time = end_time - timedelta(minutes=self.ohlcv_len * s.INTERVAL[self.bin_size][0])
             self.data = self.fetch_ohlcv(start_time, end_time)
-            re_sample_data = u.resample(self.data, self.bin_size)
-            self.portfolio(re_sample_data)
         # update data from WS
         else:
             self.data = pd.concat([self.data, update])[1:]
+            logger.debug(self.data[-10:])
             re_sample_data = u.resample(self.data, self.bin_size)
-            self.portfolio(re_sample_data)
+            if self.data.iloc[-1].name == re_sample_data.iloc[-1].name + timedelta(minutes=s.INTERVAL[self.bin_size][0]):
+                logger.debug(re_sample_data[-10:])
+                self.portfolio(re_sample_data)
 
     def order(self, orderQty, stop=0):
         '''

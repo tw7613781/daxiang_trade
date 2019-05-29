@@ -137,7 +137,7 @@ def to_data_frame(data, reverse = False):
 
 def resample(data_frame, bin_size):
     resample_time = s.INTERVAL[bin_size][1]
-    return data_frame.resample(resample_time).agg({
+    return data_frame.resample(resample_time, closed='right').agg({
         "open": "first",
         "high": "max",
         "low": "min",
@@ -167,10 +167,8 @@ def crossover(a, b):
 def crossunder(a, b):
     return a[-2] > b[-2] and a[-1] < b[-1]
 
-def ema(series, periods, fillna=False):
-    if fillna:
-        return series.ewm(span=periods, min_periods=0).mean()
-    return series.ewm(span=periods, min_periods=periods).mean()
+def ema(series, periods):
+    return series.ewm(span=periods, adjust=False).mean()
 
 def sma(series, periods):
     return series.rolling(periods).mean()
@@ -191,7 +189,7 @@ def macd(df, n_fast=12, n_slow=26, n_signal=9):
     df = df.join(MACD)
     df = df.join(MACD_signal)
     df = df.join(MACD_diff)
-    return df
+    return df   
 
 def rsi(df, n=14):
     close = df.close

@@ -5,6 +5,8 @@ return: signal string, 'Buy', or 'Sell', or 'Nothing'
 '''
 import src.utils as u
 
+logger  = u.get_logger(__name__)
+
 class Strategy:
 
     def __init__(self):
@@ -15,6 +17,9 @@ class Strategy:
         strategy function read data from ohlcv array with length 50, gives a long or short or nothing signal
         '''
         df = u.macd(df)
+        logger.debug(f'DIF: {str(df.macd.values[-2])} - {str(df.macd.values[-1])}')
+        logger.debug(f'DEA: {str(df.macd_signal.values[-2])} - {str(df.macd_signal.values[-1])}')
+        logger.debug(f'BAR: {str(df.macd_diff.values[-2])} - {str(df.macd_diff.values[-1])}')
         if u.crossover(df.macd.values, df.macd_signal.values):
             return 'Buy'
         elif u.crossunder(df.macd.values, df.macd_signal.values):
