@@ -4,37 +4,33 @@
 
 ## Disclaimer    
 
-The project is only for study purpose, nothing contained in the Site constitutes investment, legal or tax advice. Neither the information nor any opinion contained in the Site constitutes a solicitation or an offer to buy or sell any securities, futures, options or other financial instruments. Decisions based on information contained on this site are the sole responsibility of the visitor.
+- The project is only for study purpose, nothing contained in the Site constitutes investment, legal or tax advice. Neither the information nor any opinion contained in the Site constitutes a solicitation or an offer to buy or sell any securities, futures, options or other financial instruments. Decisions based on information contained on this site are the sole responsibility of the visitor.
 
 ## Introduction    
 
-- Simple strategy, robust system, plus risk management are the three characteristics of Daxiang trading robot.      
-- Adopting design pattern of parameterization and modularity, which means it's easier to control and scale up the system.      
-- Supports backtesting and a simple dashboard.   
+- Using websocket to get '1m' level ohlcv stream from exchange and resample the data with designate time slot (1m, 5m, 15m, 30m, 45m, 1h)
+- Run strategy once the designate ohlcv candle is full received
+- Exact the same ohlcv data with Tradingview
 
 ## System code structure
 
 The main structure is consist of blew 4 files in src directory:  
-- data: talk with Bitbix restful API and websocket. Fetch ohlcv data source and give orders. 
-- strategy: give a signal (buy, sell, nothing) based on data source .
-- portfolio: manage the account's portfolio. give exact amount of order base on strategy.
-- web: provide a dashboard to display the portfolio performance    
+- data: talk with Bitbix restful API and websocket. Receive ohlcv data (websocket) and give orders (API). 
+- strategy: make signal (buy, sell, nothing) based on data source .
+- portfolio: manage the account's balance. give exact amount of order base on strategy.
+- web: provide a dashboard to display the portfolio performance   
 
 The other files
 - main: the system entry point
 - settings: control the system by params     
+- utils: all helper functions
 
-For more info, please read [system modularity](https://github.com/tw7613781/daxiang_trade/wiki/system-modularity)
 
 ## How to run the system  
 
 ```python
 python3 main.py
 ```
-
-## Available strategy
-- [MACD](https://github.com/tw7613781/daxiang_trade/blob/master/src/strategy.py)   
-- [RSI](https://github.com/tw7613781/daxiang_trade/blob/master/src/strategy.py)
 
 ## Dependencies
 All python dependencies is in [requirements.txt](https://github.com/tw7613781/daxiang_trade/blob/master/requirements.txt)
@@ -84,8 +80,3 @@ Now it's able to check out the dashboard at your aws ec2 instance public address
 
 ## Notes   
 Special thanks for project [ebisu](https://github.com/noda-sin/ebisu), Bitmex sample project [sample-market-maker](https://github.com/BitMEX/sample-market-maker) and Bitmex [connector](https://github.com/BitMEX/api-connectors), I studied a lot from these projects.
-
-## TO-DOs:
-- Change current poll way of fetching ohlcv data to bitmex-websocket. The way is more stable and not easy for http error, and it's more time sentitive.
-- Backtest function
-- More strateges
