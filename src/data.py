@@ -187,6 +187,11 @@ class Data:
         implemented by portfolio class
         '''
         pass
+    
+    def update_balance(self):
+        '''
+        implemented by portfolio class
+        '''
 
     def update_ohlcv(self, update):
         # initial data from RESTAPI
@@ -202,6 +207,7 @@ class Data:
             if self.data.iloc[-1].name == re_sample_data.iloc[-1].name + timedelta(minutes=s.INTERVAL[self.bin_size][0]):
                 logger.debug(re_sample_data[-1:])
                 self.portfolio(re_sample_data)
+            self.update_balance()
 
     def order(self, orderQty, stop=0):
         '''

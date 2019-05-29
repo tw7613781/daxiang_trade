@@ -22,6 +22,7 @@ class Portfolio:
         self.balance = [(t.now(), self.data.get_wallet_balance(), 0, 0)]
         self.set_leverage(self.leverage)
         self.data.portfolio = self.portfolio_macd
+        self.data.update_balance = self.update_balance
     
     def set_leverage(self, leverage):
         self.data.set_leverage(leverage)
@@ -52,7 +53,6 @@ class Portfolio:
             qty = self.get_qty()
             self.data.sell(qty)
         else: pass
-        self.update_balance()
     
     def portfolio_rsi(self, ohlcv):
         '''
@@ -72,8 +72,7 @@ class Portfolio:
                 self.data.order(-current_position)
                 qty = self.get_qty()
                 self.data.sell(qty)
-        else: pass
-        self.update_balance()      
+        else: pass    
 
     def update_balance(self):
         current_balance = self.data.get_wallet_balance()
