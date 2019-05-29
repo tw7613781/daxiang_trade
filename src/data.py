@@ -197,10 +197,10 @@ class Data:
         # update data from WS
         else:
             self.data = pd.concat([self.data, update])[1:]
-            logger.debug(self.data[-10:])
+            logger.debug(self.data[-1:])
             re_sample_data = u.resample(self.data, self.bin_size)
             if self.data.iloc[-1].name == re_sample_data.iloc[-1].name + timedelta(minutes=s.INTERVAL[self.bin_size][0]):
-                logger.debug(re_sample_data[-10:])
+                logger.debug(re_sample_data[-1:])
                 self.portfolio(re_sample_data)
 
     def order(self, orderQty, stop=0):
