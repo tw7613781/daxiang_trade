@@ -1,4 +1,4 @@
-# import time
+import time
 # import os
 # import base64
 # import logging
@@ -14,6 +14,9 @@ def print_error(func_name, err):
     highlight error info
     '''
     print(f'{TERM_RED}{func_name} - {err}{TERM_NFMT}')
+
+def current_milli_ts() -> str:
+    return str(int(time.time() * 1000))
 
 # ########################################################################################################################
 # # Logging relates

@@ -1,9 +1,9 @@
-"""Restful API request to coinflex
+'''Restful API request to coinflex
 Return coinflex exchange data requested thru RESTFUL api
 
 Author: Tang Wei <tw7613781@gmail.com>
 Created: Jan 21, 2022
-"""
+'''
 import os
 import base64
 import hmac
@@ -12,7 +12,7 @@ import datetime
 import requests
 from urllib.parse import urlencode
 from dotenv import load_dotenv
-from utils import print_error
+from utils import print_error, current_milli_ts
 
 load_dotenv()
 
@@ -25,9 +25,9 @@ HOST= 'https://v2api.coinflex.com'
 PATH= 'v2api.coinflex.com'
 api_key = os.getenv('APIKEY')
 api_secret = os.getenv('APISECRET')
-nonce = 870830
+nonce = 888888
 
-def private_call(method, options={}):
+def private_call(method, options={}, action='GET'):
   '''
   generate header based on api credential
   method: private call method
@@ -40,17 +40,21 @@ def private_call(method, options={}):
     path = method + '?' + body
   else:
     path = method
-  msg_string = '{}\n{}\n{}\n{}\n{}\n{}'.format(ts, nonce, 'GET', PATH, method, body)
+  msg_string = '{}\n{}\n{}\n{}\n{}\n{}'.format(ts, nonce, action, PATH, method, body)
   sig = base64.b64encode(hmac.new(api_secret.encode('utf-8'), msg_string.encode('utf-8'), hashlib.sha256).digest()).decode('utf-8')
 
   header = {'Content-Type': 'application/json', 'AccessKey': api_key,
             'Timestamp': ts, 'Signature': sig, 'Nonce': str(nonce)}
 
-  resp = requests.get(HOST + path, headers=header)
+  if action == 'GET': 
+    resp = requests.get(HOST + path, headers=header)
+  elif action == 'POST':
+    resp = requests.post(HOST + path, headers=header)
+  print(HOST + path)
   return resp.json()
 
 def isAlive() -> bool:
-  "public GET /v2/ping"
+  'public GET /v2/ping'
   try:
     endpoint = '/v2/ping'
     response = requests.get(HOST + endpoint)
@@ -60,7 +64,7 @@ def isAlive() -> bool:
     print_error('isAlive', err)
   
 def getOrderBook(market, depth):
-  "get order books of specific trading market with specific depth"
+  'get order books of specific trading market with specific depth'
   try:
     endpoint = f'/v2/depth/{market}/{depth}'
     response = requests.get(HOST + endpoint)
@@ -108,8 +112,54 @@ def getPositionsBySymbol(symbol):
   except Exception as err:
     print_error('getPositionsBySymbol', err)
 
+def getOrders():
+  '''
+  get account's unfilled orders
+  '''
+  try:
+    endpoint = '/v2/orders'
+    return(private_call(endpoint))
+  except Exception as err:
+    print_error('getOrders', err)
+
+def getOrdersByMarket(market):
+  '''
+  get account all orders in specific market
+  '''
+  try:
+    endpoint = '/v2.1/orders'
+    return(private_call(endpoint, {
+      'marketCode': market
+    }))
+  except Exception as err:
+    print_error('getOrdersByMarket', err)
+  
+# def placeLimitOrder(market, side, quantity, price):
+#   '''
+#   place a order with options
+#   '''
+#   try:
+#     endpoint = '/v2/orders/place'
+#     return(private_call(endpoint, {
+#       'responseType': 'FULL',
+#       'orders': [
+#         {
+#           'clientOrderId': str(current_milli_ts()),
+#           'marketCode': market,
+#           'side': side,
+#           'quantity': quantity,
+#           'orderType': 'LIMIT',
+#           'price': price
+#         }
+#       ]
+#     }, 'POST'))
+#   except Exception as err:
+#     print_error('placeLimitOrder', err)
+
 
 if __name__ == '__main__':
+
+  # print(placeLimitOrder('FLEX-USD', 'BUY', '1', '4.5'))
   
   print(f'{TERM_BLUE}1. public /v2/ping{TERM_NFMT}')
   print(isAlive())
@@ -128,3 +178,9 @@ if __name__ == '__main__':
 
   print(f'{TERM_BLUE}6. private /v2/positions/ETH{TERM_NFMT}')
   print(getPositionsBySymbol('ETH-USD-SWAP-LIN'))
+
+  print(f'{TERM_BLUE}7. private /v2/orders{TERM_NFMT}')
+  print(getOrders())
+
+  print(f'{TERM_BLUE}8. private /v2.1/orders?marketCode=FLEX-USD{TERM_NFMT}')
+  print(getOrdersByMarket('FLEX-USD'))
