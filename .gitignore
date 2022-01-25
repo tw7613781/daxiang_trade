@@ -1,4 +1,5 @@
 .env
+.note
 .vscode
 __pycache__
 .pytest_cache
