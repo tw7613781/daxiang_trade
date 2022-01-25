@@ -91,18 +91,17 @@ async def process():
           data = msg['data'][0]
           print(f'{TERM_BLUE}{data}{TERM_NFMT}')
           if 'notice' in data and data['notice'] == 'OrderMatched':
-            print(f'{TERM_BLUE}Execute order...{TERM_NFMT}')
             side = data['side']
             quantity = float(data['matchQuantity'])
             price = float(data['price'])
             if side == 'BUY':
               # 买单成交了,要挂卖单
-              print(f'{TERM_BLUE}Sell order...{quantity} - {sell_price}{TERM_NFMT}\n')
+              print(f'{TERM_GREEN}Execute sell order: {quantity} - {sell_price}{TERM_NFMT}')
               await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'SELL', quantity, sell_price)))
             elif side == 'SELL':
               # 卖单成交了,要挂买单
-              print(f'{TERM_BLUE}Bull order...{int(quantity * price / buy_price)}{buy_price}{TERM_NFMT}\n')
-              await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', round(quantity * price / buy_price, 2), buy_price)))
+              print(f'{TERM_GREEN}Execute bull order: {round(quantity * price / buy_price, 1)} - {buy_price}{TERM_NFMT}')
+              await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', round(quantity * price / buy_price, 1), buy_price)))
     except ConnectionResetError:
       print(f'{TERM_RED}Connection reset by peer, try to reconnect...{TERM_NFMT}')
       await process()
