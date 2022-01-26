@@ -87,10 +87,7 @@ def get_best_buyPrice_and_sellPrice(depth_data, diff):
     if cumulate_amount > diff:
       if i-1 >=0:
         best_sell_price = sell_list[i-1][0]
-      else:
-        best_sell_price = sell_list[0][0]
       break
-  if (best_sell_price == None): best_sell_price = sell_list[-1][0]
 
   buy_list = depth_data['bids']
   best_buy_price = None
@@ -100,10 +97,7 @@ def get_best_buyPrice_and_sellPrice(depth_data, diff):
     if cumulate_amount > diff:
       if i-1 >=0:
         best_buy_price = buy_list[i-1][0]
-      else:
-        best_buy_price = buy_list[0][0]
       break
-  if (best_buy_price == None): best_buy_price = buy_list[-1][0]
   
   return best_buy_price, best_sell_price
 
@@ -128,7 +122,7 @@ async def process():
       if 'table' in msg and msg['table']=='depth':
         depth_data = msg['data'][0]
         new_buy_price, new_sell_price = get_best_buyPrice_and_sellPrice(depth_data, depth_amount)
-        if buy_price != new_buy_price or sell_price != new_sell_price:
+        if (buy_price != None and buy_price != new_buy_price) or (sell_price != None and sell_price != new_sell_price):
           print(f'{TERM_GREEN}update buy_price: {buy_price} => {new_buy_price}, {sell_price} => {new_sell_price}{TERM_NFMT}')
           buy_price = new_buy_price
           sell_price = new_sell_price
@@ -148,11 +142,15 @@ async def process():
             print(f'{TERM_GREEN}Execute bull order: {round(quantity * price / buy_price, 1)} - {buy_price}{TERM_NFMT}')
             await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', round(quantity * price / buy_price, 1), buy_price)))
 
+def handle_exception(loop, context):
+    # context["message"] will always be there; but context["exception"] may not
+    msg = context.get("exception", context["message"])
+    print(f"{TERM_RED}Caught exception: {msg}{TERM_NFMT}")
+    loop.run_until_complete(process())
+
 if __name__ == '__main__':
   print(f'{TERM_GREEN}Config loaded, user: {user_id}, buy_price: {buy_price}, sell_price: {sell_price}{TERM_NFMT}')
-  try:
-    asyncio.get_event_loop().run_until_complete(process())
-  except Exception as err:
-    print(err)
-    print(f'{TERM_RED}Errors, try to reconnect...{TERM_NFMT}')
-    asyncio.get_event_loop().run_until_complete(process())
+  loop = asyncio.get_event_loop()
+  loop.run_until_complete(process())
+  loop.set_exception_handler(handle_exception)
+  loop.close()
