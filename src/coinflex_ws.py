@@ -17,6 +17,7 @@ user_id = os.getenv('USERID')
 
 sell_price = float(os.getenv('SELLPRICE'))
 buy_price = float(os.getenv('BUYPRICE'))
+depth_amount = float(os.getenv('DEPTHAMOUNT'))
 
 websocket_endpoint = 'wss://v2api.coinflex.com/v2/websocket'
 
@@ -55,6 +56,13 @@ def subscribe_ticker_msg(market):
     'args': [f'ticker:{market}']
   }
 
+def subscribe_depth_msg(market):
+  return {
+    "op": "subscribe",
+    "tag": 103,
+    "args": [f"depth:{market}"]
+  }
+
 def place_limit_order_msg(market, side, quantity, price):
   return {
     'op': 'placeorder',
@@ -70,14 +78,45 @@ def place_limit_order_msg(market, side, quantity, price):
     }
   }
 
+def get_best_buyPrice_and_sellPrice(depth_data, diff):
+  sell_list = depth_data['asks']
+  best_sell_price = None
+  cumulate_amount = 0
+  for i in range(len(sell_list)):
+    cumulate_amount += sell_list[i][1]
+    if cumulate_amount > diff:
+      if i-1 >=0:
+        best_sell_price = sell_list[i-1][0]
+      else:
+        best_sell_price = sell_list[0][0]
+      break
+  if (best_sell_price == None): best_sell_price = sell_list[-1][0]
+
+  buy_list = depth_data['bids']
+  best_buy_price = None
+  cumulate_amount = 0
+  for i in range(len(buy_list)):
+    cumulate_amount += buy_list[i][1]
+    if cumulate_amount > diff:
+      if i-1 >=0:
+        best_buy_price = buy_list[i-1][0]
+      else:
+        best_buy_price = buy_list[0][0]
+      break
+  if (best_buy_price == None): best_buy_price = buy_list[-1][0]
+  
+  return best_buy_price, best_sell_price
+
 async def initial_conn(ws):
   await ws.send(json.dumps(auth_msg()))
   await ws.send(json.dumps(subscribe_orders_msg('FLEX-USD')))
-  await ws.send((json.dumps(subscribe_ticker_msg('FLEX-USD'))))
+  await ws.send((json.dumps(subscribe_depth_msg('FLEX-USD'))))
   # await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', 1, 4.5)))
 
 async def process():
   async with websockets.connect(websocket_endpoint) as ws:
+    global buy_price
+    global sell_price
     await initial_conn(ws)
     while ws.open:
       resp = await ws.recv()
@@ -86,6 +125,13 @@ async def process():
       if 'event' in msg and msg['event']=='login':
         ts = msg['timestamp']
         print(f'{TERM_GREEN}Login succeed at {datetime.fromtimestamp(int(ts) / 1000)}{TERM_NFMT}\n')
+      if 'table' in msg and msg['table']=='depth':
+        depth_data = msg['data'][0]
+        new_buy_price, new_sell_price = get_best_buyPrice_and_sellPrice(depth_data, depth_amount)
+        if buy_price != new_buy_price or sell_price != new_sell_price:
+          print(f'{TERM_GREEN}update buy_price: {buy_price} => {new_buy_price}, {sell_price} => {new_sell_price}{TERM_NFMT}')
+          buy_price = new_buy_price
+          sell_price = new_sell_price
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
         print(f'{TERM_BLUE}{data}{TERM_NFMT}')
@@ -106,9 +152,7 @@ if __name__ == '__main__':
   print(f'{TERM_GREEN}Config loaded, user: {user_id}, buy_price: {buy_price}, sell_price: {sell_price}{TERM_NFMT}')
   try:
     asyncio.get_event_loop().run_until_complete(process())
-  except ConnectionResetError:
-    print(f'{TERM_RED}Connection reset by peer, try to reconnect...{TERM_NFMT}')
-  except asyncio.TimeoutError:
-    print(f'{TERM_RED}Connection timeout, try to reconnect...{TERM_NFMT}')
-  finally:
+  except Exception as err:
+    print(err)
+    print(f'{TERM_RED}Errors, try to reconnect...{TERM_NFMT}')
     asyncio.get_event_loop().run_until_complete(process())
