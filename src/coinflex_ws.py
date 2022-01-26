@@ -78,35 +78,37 @@ async def initial_conn(ws):
 
 async def process():
   async with websockets.connect(websocket_endpoint) as ws:
-    try: 
-      await initial_conn(ws)
-      while ws.open:
-        resp = await ws.recv()
-        msg = json.loads(resp)
-        # print(msg)
-        if 'event' in msg and msg['event']=='login':
-          ts = msg['timestamp']
-          print(f'{TERM_GREEN}Login succeed at {datetime.fromtimestamp(int(ts) / 1000)}{TERM_NFMT}\n')
-        if 'table' in msg and msg['table']=='order':
-          data = msg['data'][0]
-          print(f'{TERM_BLUE}{data}{TERM_NFMT}')
-          if 'notice' in data and data['notice'] == 'OrderMatched':
-            side = data['side']
-            quantity = float(data['matchQuantity'])
-            price = float(data['price'])
-            if side == 'BUY':
-              # 买单成交了,要挂卖单
-              print(f'{TERM_GREEN}Execute sell order: {quantity} - {sell_price}{TERM_NFMT}')
-              await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'SELL', quantity, sell_price)))
-            elif side == 'SELL':
-              # 卖单成交了,要挂买单
-              print(f'{TERM_GREEN}Execute bull order: {round(quantity * price / buy_price, 1)} - {buy_price}{TERM_NFMT}')
-              await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', round(quantity * price / buy_price, 1), buy_price)))
-    except ConnectionResetError:
-      print(f'{TERM_RED}Connection reset by peer, try to reconnect...{TERM_NFMT}')
-      await process()
-
+    await initial_conn(ws)
+    while ws.open:
+      resp = await ws.recv()
+      msg = json.loads(resp)
+      # print(msg)
+      if 'event' in msg and msg['event']=='login':
+        ts = msg['timestamp']
+        print(f'{TERM_GREEN}Login succeed at {datetime.fromtimestamp(int(ts) / 1000)}{TERM_NFMT}\n')
+      if 'table' in msg and msg['table']=='order':
+        data = msg['data'][0]
+        print(f'{TERM_BLUE}{data}{TERM_NFMT}')
+        if 'notice' in data and data['notice'] == 'OrderMatched':
+          side = data['side']
+          quantity = float(data['matchQuantity'])
+          price = float(data['price'])
+          if side == 'BUY':
+            # 买单成交了,要挂卖单
+            print(f'{TERM_GREEN}Execute sell order: {quantity} - {sell_price}{TERM_NFMT}')
+            await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'SELL', quantity, sell_price)))
+          elif side == 'SELL':
+            # 卖单成交了,要挂买单
+            print(f'{TERM_GREEN}Execute bull order: {round(quantity * price / buy_price, 1)} - {buy_price}{TERM_NFMT}')
+            await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', round(quantity * price / buy_price, 1), buy_price)))
 
 if __name__ == '__main__':
   print(f'{TERM_GREEN}Config loaded, user: {user_id}, buy_price: {buy_price}, sell_price: {sell_price}{TERM_NFMT}')
-  asyncio.get_event_loop().run_until_complete(process())
+  try:
+    asyncio.get_event_loop().run_until_complete(process())
+  except ConnectionResetError:
+    print(f'{TERM_RED}Connection reset by peer, try to reconnect...{TERM_NFMT}')
+  except asyncio.TimeoutError:
+    print(f'{TERM_RED}Connection timeout, try to reconnect...{TERM_NFMT}')
+  finally:
+    asyncio.get_event_loop().run_until_complete(process())
