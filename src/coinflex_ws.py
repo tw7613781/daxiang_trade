@@ -142,15 +142,14 @@ async def process():
             print(f'{TERM_GREEN}Execute bull order: {round(quantity * price / buy_price, 1)} - {buy_price}{TERM_NFMT}')
             await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', round(quantity * price / buy_price, 1), buy_price)))
 
-def handle_exception(loop, context):
-    # context["message"] will always be there; but context["exception"] may not
-    msg = context.get("exception", context["message"])
-    print(f"{TERM_RED}Caught exception: {msg}{TERM_NFMT}")
-    loop.run_until_complete(process())
 
 if __name__ == '__main__':
   print(f'{TERM_GREEN}Config loaded, user: {user_id}, buy_price: {buy_price}, sell_price: {sell_price}{TERM_NFMT}')
-  loop = asyncio.get_event_loop()
-  loop.run_until_complete(process())
-  loop.set_exception_handler(handle_exception)
-  loop.close()
+
+  while True:
+    try:
+      loop = asyncio.get_event_loop()
+      loop.run_until_complete(process())
+      loop.close()
+    except Exception as err:
+      print(f"{TERM_RED}Caught exception: {err}{TERM_NFMT}")
