@@ -5,9 +5,12 @@ import base64
 import hashlib
 import json
 import os
+import math
 from datetime import datetime
 from dotenv import load_dotenv
 from utils import current_milli_ts, TERM_BLUE, TERM_NFMT, TERM_GREEN, TERM_RED
+
+from global_utils import *
 
 load_dotenv()
 
@@ -20,6 +23,8 @@ buy_price = float(os.getenv('BUYPRICE'))
 depth_amount = float(os.getenv('DEPTHAMOUNT'))
 
 websocket_endpoint = 'wss://v2api.coinflex.com/v2/websocket'
+
+logger = setup_logger(__file__)
 
 def auth_msg():
   ts = current_milli_ts()
@@ -78,28 +83,17 @@ def place_limit_order_msg(market, side, quantity, price):
     }
   }
 
-def get_best_buyPrice_and_sellPrice(depth_data, diff):
-  sell_list = depth_data['asks']
-  best_sell_price = None
-  cumulate_amount = 0
-  for i in range(len(sell_list)):
-    cumulate_amount += sell_list[i][1]
-    if cumulate_amount > diff:
+def get_best_price(depth_data, diff):
+  best_price = None
+  accumulated_amount = 0
+  for i in range(len(depth_data)):
+    accumulated_amount += depth_data[i][1]
+    if accumulated_amount > diff:
       if i-1 >=0:
-        best_sell_price = sell_list[i-1][0]
+        best_price = depth_data[i-1][0]
       break
 
-  buy_list = depth_data['bids']
-  best_buy_price = None
-  cumulate_amount = 0
-  for i in range(len(buy_list)):
-    cumulate_amount += buy_list[i][1]
-    if cumulate_amount > diff:
-      if i-1 >=0:
-        best_buy_price = buy_list[i-1][0]
-      break
-  
-  return best_buy_price, best_sell_price
+  return best_price
 
 async def initial_conn(ws):
   await ws.send(json.dumps(auth_msg()))
@@ -118,33 +112,36 @@ async def process():
       # print(msg)
       if 'event' in msg and msg['event']=='login':
         ts = msg['timestamp']
-        print(f'{TERM_GREEN}Login succeed at {datetime.fromtimestamp(int(ts) / 1000)}{TERM_NFMT}\n')
+        logger.info(f'{TERM_GREEN}Login succeed{TERM_NFMT}')
       if 'table' in msg and msg['table']=='depth':
         depth_data = msg['data'][0]
-        new_buy_price, new_sell_price = get_best_buyPrice_and_sellPrice(depth_data, depth_amount)
-        if (buy_price != None and buy_price != new_buy_price) or (sell_price != None and sell_price != new_sell_price):
-          print(f'{TERM_GREEN}update buy_price: {buy_price} => {new_buy_price}, {sell_price} => {new_sell_price}{TERM_NFMT}')
+        new_buy_price = get_best_price(depth_data['bids'], depth_amount)
+        new_sell_price = get_best_price(depth_data['asks'], depth_amount)
+        if (new_buy_price != None and new_buy_price != buy_price):
+          logger.info(f'{TERM_GREEN}Update buy_price: {buy_price} => {new_buy_price}, {sell_price} => {new_sell_price}{TERM_NFMT}')
           buy_price = new_buy_price
+        if (new_sell_price != None and new_sell_price != sell_price):
+          logger.info(f'{TERM_GREEN}Update sell_price: {buy_price} => {new_buy_price}, {sell_price} => {new_sell_price}{TERM_NFMT}')
           sell_price = new_sell_price
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
-        print(f'{TERM_BLUE}{data}{TERM_NFMT}')
+        logger.info(f'{TERM_BLUE}{data}{TERM_NFMT}')
         if 'notice' in data and data['notice'] == 'OrderMatched':
           side = data['side']
           quantity = float(data['matchQuantity'])
           price = float(data['price'])
           if side == 'BUY':
             # 买单成交了,要挂卖单
-            print(f'{TERM_GREEN}Execute sell order: {quantity} - {sell_price}{TERM_NFMT}')
+            logger.info(f'{TERM_GREEN}Execute sell order: {quantity} - {sell_price}{TERM_NFMT}')
             await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'SELL', quantity, sell_price)))
           elif side == 'SELL':
             # 卖单成交了,要挂买单
-            print(f'{TERM_GREEN}Execute bull order: {round(quantity * price / buy_price, 1)} - {buy_price}{TERM_NFMT}')
-            await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', round(quantity * price / buy_price, 1), buy_price)))
+            logger.info(f'{TERM_GREEN}Execute bull order: {math.floor(quantity * price / buy_price)} - {buy_price}{TERM_NFMT}')
+            await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', math.floor(quantity * price / buy_price), buy_price)))
 
 
 if __name__ == '__main__':
-  print(f'{TERM_GREEN}Config loaded, user: {user_id}, buy_price: {buy_price}, sell_price: {sell_price}{TERM_NFMT}')
+  logger.info(f'{TERM_GREEN}Config loaded, user: {user_id}, buy_price: {buy_price}, sell_price: {sell_price}{TERM_NFMT}')
 
   while True:
     try:
@@ -152,4 +149,4 @@ if __name__ == '__main__':
       loop.run_until_complete(process())
       loop.close()
     except Exception as err:
-      print(f"{TERM_RED}Caught exception: {err}{TERM_NFMT}")
+      logger.error(f"{TERM_RED}Caught exception: {err}{TERM_NFMT}")
