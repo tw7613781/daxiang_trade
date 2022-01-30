@@ -4,23 +4,24 @@ import hmac
 import base64
 import hashlib
 import json
-import os
+import sys
 import math
 from datetime import datetime
-from dotenv import load_dotenv
 from utils import current_milli_ts, TERM_BLUE, TERM_NFMT, TERM_GREEN, TERM_RED
 
 from global_utils import *
 
-load_dotenv()
+config_path = sys.argv[-1]
+config = get_json_config(config_path, "config")
 
-api_key = os.getenv('APIKEY')
-api_secret = os.getenv('APISECRET')
-user_id = os.getenv('USERID')
 
-sell_price = float(os.getenv('SELLPRICE'))
-buy_price = float(os.getenv('BUYPRICE'))
-depth_amount = float(os.getenv('DEPTHAMOUNT'))
+api_key = config['APIKEY']
+api_secret = config['APISECRET']
+user_id = config['USERID']
+
+sell_price = float(config['SELLPRICE'])
+buy_price = float(config['BUYPRICE'])
+depth_amount = float(config['DEPTHAMOUNT'])
 
 websocket_endpoint = 'wss://v2api.coinflex.com/v2/websocket'
 
