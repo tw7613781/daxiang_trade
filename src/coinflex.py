@@ -48,6 +48,7 @@ class Coinflex():
     self.websocket_app = MyWebSocketApp(self)
 
     self.orders = []
+    self.last_updated_ts = 0
     
     self.init_finish_event.set()
 
@@ -70,26 +71,24 @@ class Coinflex():
         cur_ts = int(current_milli_ts())
         
         # get new buy price, update buy price if the buy order is hung for certain time
-        if (new_buy_price != None and new_buy_price != self.buy_price):
-          self.logger.info(f'{TERM_GREEN}Update buy_price: {self.buy_price} => {new_buy_price}, {self.sell_price}{TERM_NFMT}')
-          self.buy_price = new_buy_price
+        if (new_buy_price != None and (cur_ts - self.last_updated_ts) / 1000 > self.price_update_interval):
+          if new_buy_price != self.buy_price:
+            self.logger.info(f'{TERM_GREEN}Update buy_price: {self.buy_price} => {new_buy_price}, {self.sell_price}{TERM_NFMT}')
+            self.buy_price = new_buy_price
           for order in self.orders:
-            if order["side"] == "BUY":
-              order_ts = int(order["timestamp"] if "timestamp" in order else order["lastModified"])
-              if (cur_ts - order_ts) / 1000 > self.price_update_interval:
-                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.buy_price))
-                order["timestamp"] = cur_ts
+            if order["side"] == "BUY" and float(order["price"]) != self.buy_price:
+              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.buy_price))
+          self.last_updated_ts = int(current_milli_ts())
 
         # get new sell price, update sell price if the sell order is hung for certain time  
-        if (new_sell_price != None and new_sell_price != self.sell_price):
-          self.logger.info(f'{TERM_GREEN}Update sell_price: {self.buy_price}, {self.sell_price} => {new_sell_price}{TERM_NFMT}')
-          self.sell_price = new_sell_price
+        if (new_sell_price != None and (cur_ts - self.last_updated_ts) / 1000 > self.price_update_interval):
+          if new_sell_price != self.sell_price:
+            self.logger.info(f'{TERM_GREEN}Update sell_price: {self.buy_price}, {self.sell_price} => {new_sell_price}{TERM_NFMT}')
+            self.sell_price = new_sell_price
           for order in self.orders:
-            if order["side"] == "SELL":
-              order_ts = int(order["timestamp"] if "timestamp" in order else order["lastModified"])
-              if (cur_ts - order_ts) / 1000 > self.price_update_interval:
-                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
-                order["timestamp"] = cur_ts
+            if order["side"] == "SELL" and float(order["price"] != self.sell_price):
+              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
+          self.last_updated_ts = int(current_milli_ts())
       
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
