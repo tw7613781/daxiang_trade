@@ -1,21 +1,14 @@
 '''
 Daxiang trading robot main entry
 '''
-from src.portfolio import Portfolio
-from src.strategy import Strategy
-from src.data import Data
-from src.web import Web
-import src.settings as s
-from time import time, sleep
-
+import sys
+from src.coinflex import Coinflex
 
 if __name__ == '__main__':
-    data = Data()
-    strategy = Strategy()
-    portfolio = Portfolio(strategy, data)
-    web = Web(portfolio)
-    try:
-        while True:
-            sleep(0.5)
-    except KeyboardInterrupt:
-        data.close()            
+  config_file = sys.argv[-1]
+  if len(sys.argv) == 2:   
+    coinflex = Coinflex(config_file)
+    coinflex.websocket_app.wst.join()
+  else:
+    print("config file is not provided!")
+    sys.exit()

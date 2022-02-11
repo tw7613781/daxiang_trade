@@ -137,8 +137,8 @@ async def process():
             await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'SELL', quantity, sell_price)))
           elif side == 'SELL':
             # 卖单成交了,要挂买单
-            logger.info(f'{TERM_GREEN}Execute bull order: {math.floor(quantity * price / buy_price)} - {buy_price}{TERM_NFMT}')
-            await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', math.floor(quantity * price / buy_price), buy_price)))
+            logger.info(f'{TERM_GREEN}Execute bull order: {math.floor(quantity * price / buy_price * 10) / 10} - {buy_price}{TERM_NFMT}')
+            await ws.send(json.dumps(place_limit_order_msg('FLEX-USD', 'BUY', math.floor(quantity * price / buy_price * 10) / 10, buy_price)))
 
 
 if __name__ == '__main__':
