@@ -9,6 +9,7 @@ import threading
 import hmac
 import base64
 import hashlib
+import math
 
 from src.websocket_app import MyWebSocketApp
 from src.common.global_utils import *
@@ -25,12 +26,17 @@ class Coinflex():
     self.account_id = get_json_config(file=self.con_file, section=self.exchange, key="USERID")
     self.api_key = get_json_config(file=self.con_file, section=self.exchange, key="APIKEY")
     self.secret_key = get_json_config(file=self.con_file, section=self.exchange, key="APISECRET")
+    
     self.market = get_json_config(file=self.con_file, section=self.exchange, key="MARKET")
+    self.buy_price = float(get_json_config(file=self.con_file, section=self.exchange, key="BUYPRICE"))
+    self.sell_price = float(get_json_config(file=self.con_file, section=self.exchange, key="SELLPRICE"))
+    self.volume = float(get_json_config(file=self.con_file, section=self.exchange, key="VOLUME"))
 
 
     self.ping_interval = 10
     
     self.logger = setup_logger(self.account_id + "_" + self.exchange + "_" + current_time_string(), log_path="./logs")
+    self.logger.info(f'{TERM_GREEN}Config loaded ==> user: {self.account_id}, buy_price: {self.buy_price}, sell_price: {self.sell_price}, volume: {self.volume}{TERM_NFMT}')
 
     self.websocket_app = MyWebSocketApp(self)
     
@@ -44,12 +50,37 @@ class Coinflex():
     """
     try:
       msg = json.loads(msg)
-      self.logger.info(msg)
 
       if 'event' in msg and msg['event']=='login':
         self.logger.info(f'{TERM_GREEN}Login succeed{TERM_NFMT}')
       
+      if 'table' in msg and msg['table']=='depth':
+        depth_data = msg['data'][0]
+        new_buy_price = self.get_best_price(depth_data['bids'], self.volume)
+        new_sell_price = self.get_best_price(depth_data['asks'], self.volume)
+        if (new_buy_price != None and new_buy_price != self.buy_price):
+          self.logger.info(f'{TERM_GREEN}Update buy_price: {self.buy_price} => {new_buy_price}, {self.sell_price} => {new_sell_price}{TERM_NFMT}')
+          self.buy_price = new_buy_price
+        if (new_sell_price != None and new_sell_price != self.sell_price):
+          self.logger.info(f'{TERM_GREEN}Update sell_price: {self.buy_price} => {new_buy_price}, {self.sell_price} => {new_sell_price}{TERM_NFMT}')
+          self.sell_price = new_sell_price
       
+      if 'table' in msg and msg['table']=='order':
+        data = msg['data'][0]
+        self.logger.info(f'{TERM_BLUE}{data}{TERM_NFMT}')
+        if 'notice' in data and data['notice'] == 'OrderMatched':
+          side = data['side']
+          quantity = float(data['matchQuantity'])
+          price = float(data['price'])
+          if side == 'BUY':
+            # 买单成交了,要挂卖单
+            self.logger.info(f'{TERM_GREEN}Execute sell order: {quantity} - {self.sell_price}{TERM_NFMT}')
+            self.websocket_app.send_command(self.place_limit_order_msg('FLEX-USD', 'SELL', quantity, self.sell_price))
+          elif side == 'SELL':
+            # 卖单成交了,要挂买单
+            self.logger.info(f'{TERM_GREEN}Execute bull order: {math.floor(quantity * price / self.buy_price * 10) / 10} - {self.buy_price}{TERM_NFMT}')
+            self.websocket_app.send_command(self.place_limit_order_msg('FLEX-USD', 'BUY', math.floor(quantity * price / self.buy_price * 10) / 10, self.buy_price))
+            
     except:
       self.logger.error("on_message error!  %s " % msg)
       self.logger.error(traceback.format_exc())
