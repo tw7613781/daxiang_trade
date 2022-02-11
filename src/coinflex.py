@@ -78,7 +78,6 @@ class Coinflex():
               order_ts = int(order["timestamp"] if "timestamp" in order else order["lastModified"])
               if (cur_ts - order_ts) / 1000 > self.price_update_interval:
                 self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.buy_price))
-          self.logger.info(self.orders)
 
         # get new sell price, update sell price if the sell order is hung for certain time  
         if (new_sell_price != None and new_sell_price != self.sell_price):
@@ -89,7 +88,6 @@ class Coinflex():
               order_ts = int(order["timestamp"] if "timestamp" in order else order["lastModified"])
               if (cur_ts - order_ts) / 1000 > self.price_update_interval:
                 self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
-          self.logger.info(self.orders)
       
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
@@ -124,6 +122,20 @@ class Coinflex():
           side = data['side']
           quantity = float(data['matchQuantity'])
           price = float(data['matchPrice'])
+
+          ## 如果是部分成交,关掉此成交单,从orders列表中删除,再把剩余volume建一个新单
+          ## 如果是全部成交,就删除就好了
+          # 把此order从self.orders列表删除
+          for index in range(len(self.orders)):
+            if self.orders[index]['orderId'] == data['orderId']:
+              del self.orders[index]
+              if data["remainQuantity"] != "0":
+                self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, data["orderId"]))
+                self.websocket_app.send_command(self.place_limit_order_msg(self.market, data["side"], data["remainQuantity"], data["price"]))
+              self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {data["price"]} - {data["quantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
+              self.logger.info(self.orders)
+              break
+
           if side == 'BUY':
             # 买单成交了,要挂卖单
             self.logger.info(f'{TERM_GREEN}Execute sell order: {quantity} - {self.sell_price}{TERM_NFMT}')
@@ -132,14 +144,6 @@ class Coinflex():
             # 卖单成交了,要挂买单
             self.logger.info(f'{TERM_GREEN}Execute bull order: {math.floor(quantity * price / self.buy_price * 10) / 10} - {self.buy_price}{TERM_NFMT}')
             self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'BUY', math.floor(quantity * price / self.buy_price * 10) / 10, self.buy_price))
-          if data["remainQuantity"] == "0":
-            # 把此order从self.orders列表删除
-            for index in range(len(self.orders)):
-              if self.orders[index]['orderId'] == data['orderId']:
-                del self.orders[index]
-                self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {data["price"]} - {data["quantity"]} - THE ORDER IS FULLY FILLED {TERM_NFMT}')
-                self.logger.info(self.orders)
-                break
             
     except:
       self.logger.error("on_message error!  %s " % msg)
@@ -249,6 +253,17 @@ class Coinflex():
         "marketCode": market,
         "orderId": order_id,
         "price": new_price,
+      }
+    }
+    return json.dumps(msg)
+  
+  def cancel_limit_order_msg(self, market, order_id):
+    msg = {
+      "op": "cancelorder",
+      "tag": 456,
+      "data": {
+        "marketCode": market,
+        "orderId": order_id
       }
     }
     return json.dumps(msg)
