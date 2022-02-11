@@ -28,6 +28,11 @@ JSON_DICT = {}
 #a lock to protect json conf file read and write
 JSON_LOCK = Lock()
 
+TERM_RED   = '\033[1;31m'
+TERM_NFMT  = '\033[0;0m'
+TERM_BLUE  = '\033[1;34m'
+TERM_GREEN = '\033[1;32m'
+
 
 # return true if current system is Windows
 def is_windows_system():
@@ -450,6 +455,12 @@ def utc_local(utc_st):
 
 #     # set_json_config(file=mfile, section="te2st",key="test_key1",value="ddd")
 #     # print(JSON_DICT)
+
+def current_milli_ts() -> str:
+    return str(int(time.time() * 1000))
+
+def current_time_string() -> str:
+    return datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 if __name__ == '__main__':
     # get_one_availabel_addr()

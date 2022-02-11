@@ -22,21 +22,8 @@ class WebSocketBase(object):
         self.on_open = service_base.on_open
         self.on_error = service_base.on_error
         self.ping_interval = service_base.ping_interval
-
-        self.api_key = service_base.api_key
-        self.api_secret = service_base.secret_key
-        # self.service_type = service_base.service_type
-        # self.ws = {}
-
-        self.exited = False
-
-        # self.logger.info("%s %s connecting to %s", self.exchange, self.service_type, self.url)
         
-        # self.checkThread = threading.Thread(target=lambda: self.check_thread())
-        # self.checkThread.daemon = True
-        # self.checkThread.start()
-        #
-        # self.logger.info("Initialized %s %s WebSocket.", self.exchange, self.service_type)
+        self.exited = False
     
     def start_check_thread(self):
         """
