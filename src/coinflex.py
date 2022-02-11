@@ -78,6 +78,7 @@ class Coinflex():
               order_ts = int(order["timestamp"] if "timestamp" in order else order["lastModified"])
               if (cur_ts - order_ts) / 1000 > self.price_update_interval:
                 self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.buy_price))
+                order["timestamp"] = cur_ts
 
         # get new sell price, update sell price if the sell order is hung for certain time  
         if (new_sell_price != None and new_sell_price != self.sell_price):
@@ -88,6 +89,7 @@ class Coinflex():
               order_ts = int(order["timestamp"] if "timestamp" in order else order["lastModified"])
               if (cur_ts - order_ts) / 1000 > self.price_update_interval:
                 self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
+                order["timestamp"] = cur_ts
       
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
