@@ -101,7 +101,7 @@ class Coinflex():
           # 开单,把order加入self.orders列表
           self.orders.append(data)
           self.logger.info(f'{TERM_BLUE}Update order list, add order: {data["orderId"]} - {data["side"]} - {data["price"]} - {data["quantity"]} {TERM_NFMT}')
-          self.logger.info(self.orders)
+          self.display_orders()
 
         if 'notice' in data and data['notice'] == 'OrderClosed':
           # 关闭单,把order从self.orders列表删除
@@ -109,7 +109,7 @@ class Coinflex():
             if self.orders[index]['orderId'] == data['orderId']:
               del self.orders[index]
               self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {data["price"]} - {data["quantity"]} - {data["status"]} {TERM_NFMT}')
-              self.logger.info(self.orders)
+              self.display_orders()
               break
 
         if 'notice' in data and data['notice'] == 'OrderModified':
@@ -119,7 +119,7 @@ class Coinflex():
               del self.orders[index]
               self.orders.append(data)
               self.logger.info(f'{TERM_BLUE}Update order list, modified order: {data["orderId"]} - {data["side"]} - {data["price"]} - {data["quantity"]} - {data["status"]} {TERM_NFMT}')
-              self.logger.info(self.orders)
+              self.display_orders()
               break
               
 
@@ -138,7 +138,7 @@ class Coinflex():
                 self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, data["orderId"]))
                 self.websocket_app.send_command(self.place_limit_order_msg(self.market, side, quantity, price))
               self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {(data["price"])} - {data["quantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
-              self.logger.info(self.orders)
+              self.display_orders()
               break
 
           if side == 'BUY':
@@ -173,7 +173,7 @@ class Coinflex():
       msg = self.getOrders()
       if 'event' in msg and msg['event']=='orders' and msg['data']:
         self.orders = msg['data']
-        self.logger.info(self.orders)
+        self.display_orders()
     except:
       self.logger.error("on_open Error!!!")
       self.logger.error(traceback.format_exc())
@@ -336,3 +336,7 @@ class Coinflex():
     except:
       self.logger.error("http getOrders Error!!!")
       self.logger.error(traceback.format_exc())
+  
+  def display_orders(self):
+    for order in self.orders:
+      self.logger.warn(f'Order: {order["orderId"]} - {order["side"]} - {order["quantity"]} - {order["price"]}')
