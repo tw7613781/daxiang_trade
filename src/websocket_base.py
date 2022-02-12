@@ -30,9 +30,9 @@ class WebSocketBase(object):
         启动检测线程
         :return:
         """
-        check_thread = threading.Thread(target=lambda: self.check_thread())
-        check_thread.daemon = True
-        check_thread.start()
+        self.check_thread = threading.Thread(target=lambda: self.check_thread_impl())
+        self.check_thread.daemon = True
+        self.check_thread.start()
     
     def exit(self):
         """
@@ -41,7 +41,7 @@ class WebSocketBase(object):
         :return:
         """
 
-    def check_thread(self):
+    def check_thread_impl(self):
         """
             check websocket connect status, rewritten by derived classes
         :param msg:

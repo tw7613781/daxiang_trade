@@ -29,7 +29,7 @@ class MyWebSocketApp(WebSocketBase):
         self.exited = True
         self.ws.close()
 
-    def check_thread(self):
+    def check_thread_impl(self):
         while True:
             try:
                 if (not self.ws.sock or not self.ws.sock.connected) and self.exited:

@@ -9,6 +9,7 @@ if __name__ == '__main__':
   if len(sys.argv) == 2:   
     coinflex = Coinflex(config_file)
     coinflex.websocket_app.wst.join()
+    coinflex.websocket_app.check_thread.join()
   else:
     print("config file is not provided!")
     sys.exit()
