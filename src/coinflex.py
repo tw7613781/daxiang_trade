@@ -136,7 +136,7 @@ class Coinflex():
               del self.orders[index]
               if data["remainQuantity"] != "0":
                 self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, data["orderId"]))
-                self.websocket_app.send_command(self.place_limit_order_msg(self.market, data["side"], data["remainQuantity"], data["price"]))
+                self.websocket_app.send_command(self.place_limit_order_msg(self.market, side, quantity, price))
               self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {(data["price"])} - {data["quantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
               self.logger.info(self.orders)
               break
