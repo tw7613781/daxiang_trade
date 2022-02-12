@@ -11,6 +11,7 @@ import hmac
 import base64
 import hashlib
 import math
+from decimal import Decimal
 from urllib.parse import urlencode
 
 import requests
@@ -31,11 +32,14 @@ class Coinflex():
     self.secret_key = get_json_config(file=self.con_file, section=self.exchange, key="APISECRET")
     
     self.market = get_json_config(file=self.con_file, section=self.exchange, key="MARKET")
-    self.buy_price = float(get_json_config(file=self.con_file, section=self.exchange, key="BUYPRICE"))
-    self.sell_price = float(get_json_config(file=self.con_file, section=self.exchange, key="SELLPRICE"))
-    self.volume = float(get_json_config(file=self.con_file, section=self.exchange, key="VOLUME"))
-    self.price_update_interval = float(get_json_config(file=self.con_file, section=self.exchange, key="PRICEUPDATEINTERVAL"))
 
+    self.buy_price = str(get_json_config(file=self.con_file, section=self.exchange, key="BUYPRICE"))
+    self.sell_price = str(get_json_config(file=self.con_file, section=self.exchange, key="SELLPRICE"))
+    self.volume = str(get_json_config(file=self.con_file, section=self.exchange, key="VOLUME"))
+    self.min_price_step = str(get_json_config(file=self.con_file, section=self.exchange, key="MINPRICESTEP"))
+
+    self.price_update_interval = int(get_json_config(file=self.con_file, section=self.exchange, key="PRICEUPDATEINTERVAL"))
+    
     self.http_host = get_json_config(file=self.con_file, section=self.exchange, key="HTTPURL")
     self.http_path = get_json_config(file=self.con_file, section=self.exchange, key="HTTPPATH")
     self.nonce = get_json_config(file=self.con_file, section=self.exchange, key="NONCE")
@@ -48,7 +52,8 @@ class Coinflex():
     self.websocket_app = MyWebSocketApp(self)
 
     self.orders = []
-    self.last_updated_ts = 0
+    self.last_buy_price_updated_ts = 0
+    self.last_sell_price_updated_ts = 0
     
     self.init_finish_event.set()
 
@@ -66,29 +71,28 @@ class Coinflex():
       
       if 'table' in msg and msg['table']=='depth':
         depth_data = msg['data'][0]
-        new_buy_price = self.get_best_price(depth_data['bids'], self.volume)
-        new_sell_price = self.get_best_price(depth_data['asks'], self.volume)
+        new_buy_price, new_sell_price = self.get_best_price(depth_data, self.volume, self.min_price_step)
         cur_ts = int(current_milli_ts())
         
         # get new buy price, update buy price if the buy order is hung for certain time
-        if (new_buy_price != None and (cur_ts - self.last_updated_ts) / 1000 > self.price_update_interval):
+        if (new_buy_price != None and int((cur_ts - self.last_buy_price_updated_ts) / 1000) > self.price_update_interval):
           if new_buy_price != self.buy_price:
             self.logger.info(f'{TERM_GREEN}Update buy_price: {self.buy_price} => {new_buy_price}, {self.sell_price}{TERM_NFMT}')
             self.buy_price = new_buy_price
           for order in self.orders:
-            if order["side"] == "BUY" and float(order["price"]) != self.buy_price:
+            if order["side"] == "BUY" and order["price"] != self.buy_price:
               self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.buy_price))
-          self.last_updated_ts = int(current_milli_ts())
+          self.last_buy_price_updated_ts = int(current_milli_ts())
 
         # get new sell price, update sell price if the sell order is hung for certain time  
-        if (new_sell_price != None and (cur_ts - self.last_updated_ts) / 1000 > self.price_update_interval):
+        if (new_sell_price != None and int((cur_ts - self.last_sell_price_updated_ts) / 1000) > self.price_update_interval):
           if new_sell_price != self.sell_price:
             self.logger.info(f'{TERM_GREEN}Update sell_price: {self.buy_price}, {self.sell_price} => {new_sell_price}{TERM_NFMT}')
             self.sell_price = new_sell_price
           for order in self.orders:
-            if order["side"] == "SELL" and float(order["price"] != self.sell_price):
+            if order["side"] == "SELL" and order["price"] != self.sell_price:
               self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
-          self.last_updated_ts = int(current_milli_ts())
+          self.last_sell_price_updated_ts = int(current_milli_ts())
       
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
@@ -121,8 +125,8 @@ class Coinflex():
 
         if 'notice' in data and data['notice'] == 'OrderMatched':
           side = data['side']
-          quantity = float(data['matchQuantity'])
-          price = float(data['matchPrice'])
+          quantity = data['matchQuantity']
+          price = data['matchPrice']
 
           ## 如果是部分成交,关掉此成交单,从orders列表中删除,再把剩余volume建一个新单
           ## 如果是全部成交,就删除就好了
@@ -133,7 +137,7 @@ class Coinflex():
               if data["remainQuantity"] != "0":
                 self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, data["orderId"]))
                 self.websocket_app.send_command(self.place_limit_order_msg(self.market, data["side"], data["remainQuantity"], data["price"]))
-              self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {data["price"]} - {data["quantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
+              self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {(data["price"])} - {data["quantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
               self.logger.info(self.orders)
               break
 
@@ -143,8 +147,8 @@ class Coinflex():
             self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'SELL', quantity, self.sell_price))
           elif side == 'SELL':
             # 卖单成交了,要挂买单
-            self.logger.info(f'{TERM_GREEN}Execute bull order: {math.floor(quantity * price / self.buy_price * 10) / 10} - {self.buy_price}{TERM_NFMT}')
-            self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'BUY', math.floor(quantity * price / self.buy_price * 10) / 10, self.buy_price))
+            self.logger.info(f'{TERM_GREEN}Execute bull order: {str(math.floor(div(mul(quantity, price), self.buy_price) * 10) / 10)} - {self.buy_price}{TERM_NFMT}')
+            self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'BUY', str(math.floor(div(mul(quantity, price), self.buy_price) * 10) / 10), self.buy_price))
             
     except:
       self.logger.error("on_message error!  %s " % msg)
@@ -239,8 +243,8 @@ class Coinflex():
         'marketCode': market,
         'side': side,
         'orderType': 'LIMIT',
-        'quantity': quantity,
-        'price': price
+        'quantity': float(quantity),
+        'price': float(price)
       }
     }
     return json.dumps(msg)
@@ -253,7 +257,7 @@ class Coinflex():
         "timestamp": current_milli_ts(),
         "marketCode": market,
         "orderId": order_id,
-        "price": new_price,
+        "price": float(new_price),
       }
     }
     return json.dumps(msg)
@@ -269,17 +273,33 @@ class Coinflex():
     }
     return json.dumps(msg)
 
-  def get_best_price(self, depth_data, diff):
-    best_price = None
-    accumulated_amount = 0
-    for i in range(len(depth_data)):
-      accumulated_amount += depth_data[i][1]
-      if accumulated_amount > diff:
-        if i-1 >=0:
-          best_price = depth_data[i-1][0]
-        break
+  def get_best_price(self, depth_data, volume, min_price_step):
+    buy_order_table = depth_data["bids"]
+    sell_order_table = depth_data["asks"]
 
-    return best_price
+    # buy price
+    buy_price = None
+    buy_accumulated_volume = Decimal("0")
+    for i in range(len(buy_order_table)):
+      buy_accumulated_volume += Decimal(str(buy_order_table[i][1]))
+      if buy_accumulated_volume > Decimal(volume):
+        buy_price = str(buy_order_table[i][0])
+        break
+    if Decimal(add(buy_price, min_price_step)) < Decimal(str(sell_order_table[0][0])):
+      buy_price = add(buy_price, min_price_step)
+
+    # sell price
+    sell_price = None
+    sell_accumulated_volume = Decimal("0")
+    for i in range(len(sell_order_table)):
+      sell_accumulated_volume += Decimal(str(sell_order_table[i][1]))
+      if sell_accumulated_volume > Decimal(volume):
+        sell_price = str(sell_order_table[i][0])
+        break
+    if Decimal(sub(sell_price, min_price_step)) > Decimal(str(buy_order_table[0][0])):
+      sell_price = sub(sell_price, min_price_step)
+
+    return buy_price, sell_price
 
   def private_http_call(self, method, options={}, action='GET'):
     '''

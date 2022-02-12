@@ -15,6 +15,7 @@ import src.common.constant as constant
 from getpass import getuser
 import time
 import datetime
+from decimal import Decimal
 
 # if "Linux" in platform.system():
 #     import fcntl
@@ -461,6 +462,19 @@ def current_milli_ts() -> str:
 
 def current_time_string() -> str:
     return datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
+def add(a, b) -> str:
+    return str(Decimal(a) + Decimal(b))
+
+def sub(a, b) -> str:
+    return str(Decimal(a) - Decimal(b))
+
+def mul(a, b) -> str:
+    return str(Decimal(a) * Decimal(b))
+
+def div(a, b) -> str:
+    return str(Decimal(a) / Decimal(b))
+
 
 if __name__ == '__main__':
     # get_one_availabel_addr()
