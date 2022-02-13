@@ -47,7 +47,7 @@ class Coinflex():
     self.ping_interval = 10
     
     self.logger = setup_logger(self.account_id + "_" + self.exchange + "_" + current_time_string(), log_path="./logs")
-    self.logger.info(f'{TERM_GREEN}Config loaded ==> user: {self.account_id}, buy_price: {self.buy_price}, sell_price: {self.sell_price}, volume: {self.volume}{TERM_NFMT}')
+    self.logger.info(f'{TERM_GREEN}Config loaded ==> user: {self.account_id}, buy_price: {self.buy_price}, sell_price: {self.sell_price}, volume: {self.volume}, price_update_interval: {self.price_update_interval}{TERM_NFMT}')
 
     self.websocket_app = MyWebSocketApp(self)
 
@@ -80,7 +80,7 @@ class Coinflex():
             self.logger.info(f'{TERM_GREEN}Update buy_price: {self.buy_price} => {new_buy_price}, {self.sell_price}{TERM_NFMT}')
             self.buy_price = new_buy_price
           for order in self.orders:
-            if order["side"] == "BUY" and order["price"] != self.buy_price:
+            if order["side"] == "BUY" and Decimal(order["price"]) != Decimal(self.buy_price):
               self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.buy_price))
           self.last_buy_price_updated_ts = int(current_milli_ts())
 
@@ -90,7 +90,7 @@ class Coinflex():
             self.logger.info(f'{TERM_GREEN}Update sell_price: {self.buy_price}, {self.sell_price} => {new_sell_price}{TERM_NFMT}')
             self.sell_price = new_sell_price
           for order in self.orders:
-            if order["side"] == "SELL" and order["price"] != self.sell_price:
+            if order["side"] == "SELL" and Decimal(order["price"]) != Decimal(self.sell_price):
               self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
           self.last_sell_price_updated_ts = int(current_milli_ts())
       
