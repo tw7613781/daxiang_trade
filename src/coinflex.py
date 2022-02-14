@@ -5,12 +5,12 @@
 # @File    : coinflex.py
 # @Software: vscode
 
-from curses import termattrs
 import threading
 import hmac
 import base64
 import hashlib
 import math
+import time
 from decimal import Decimal
 from urllib.parse import urlencode
 
@@ -75,28 +75,28 @@ class Coinflex():
         cur_ts = int(current_milli_ts())
         
         # get new buy price, update buy price if the buy order is hung for certain time
-        if (new_buy_price != None and int((cur_ts - self.last_buy_price_updated_ts) / 1000) > self.price_update_interval):
-          if new_buy_price != self.buy_price:
+        if (new_buy_price != None and (cur_ts - self.last_buy_price_updated_ts) > self.price_update_interval):
+          if Decimal(new_buy_price) != Decimal(self.buy_price):
             self.logger.info(f'{TERM_GREEN}Update buy_price: {self.buy_price} => {new_buy_price}, {self.sell_price}{TERM_NFMT}')
             self.buy_price = new_buy_price
-          for order in self.orders:
-            if order["side"] == "BUY" and Decimal(order["price"]) != Decimal(self.buy_price):
-              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.buy_price))
+            for order in self.orders:
+              if order["side"] == "BUY" and Decimal(order["price"]) != Decimal(self.buy_price):
+                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.buy_price))
           self.last_buy_price_updated_ts = int(current_milli_ts())
 
         # get new sell price, update sell price if the sell order is hung for certain time  
-        if (new_sell_price != None and int((cur_ts - self.last_sell_price_updated_ts) / 1000) > self.price_update_interval):
-          if new_sell_price != self.sell_price:
+        if (new_sell_price != None and (cur_ts - self.last_sell_price_updated_ts) > self.price_update_interval):
+          if Decimal(new_sell_price) != Decimal(self.sell_price):
             self.logger.info(f'{TERM_GREEN}Update sell_price: {self.buy_price}, {self.sell_price} => {new_sell_price}{TERM_NFMT}')
             self.sell_price = new_sell_price
-          for order in self.orders:
-            if order["side"] == "SELL" and Decimal(order["price"]) != Decimal(self.sell_price):
-              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
+            for order in self.orders:
+              if order["side"] == "SELL" and Decimal(order["price"]) != Decimal(self.sell_price):
+                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
           self.last_sell_price_updated_ts = int(current_milli_ts())
       
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
-        self.logger.info(f'{TERM_BLUE}{data}{TERM_NFMT}')
+        # self.logger.info(f'{TERM_BLUE}{data}{TERM_NFMT}')
         if 'notice' in data and data['notice'] == 'OrderOpened':
           # 开单,把order加入self.orders列表
           self.orders.append(data)
@@ -136,6 +136,7 @@ class Coinflex():
               del self.orders[index]
               if data["remainQuantity"] != "0":
                 self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, data["orderId"]))
+                time.sleep(2)
                 self.websocket_app.send_command(self.place_limit_order_msg(self.market, side, quantity, price))
               self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {(data["price"])} - {data["quantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
               self.display_orders()
@@ -143,11 +144,11 @@ class Coinflex():
 
           if side == 'BUY':
             # 买单成交了,要挂卖单
-            self.logger.info(f'{TERM_GREEN}Execute sell order: {quantity} - {self.sell_price}{TERM_NFMT}')
+            self.logger.info(f'{TERM_RED}Execute sell order: {quantity} - {self.sell_price}{TERM_NFMT}')
             self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'SELL', quantity, self.sell_price))
           elif side == 'SELL':
             # 卖单成交了,要挂买单
-            self.logger.info(f'{TERM_GREEN}Execute bull order: {str(math.floor(div(mul(quantity, price), self.buy_price) * 10) / 10)} - {self.buy_price}{TERM_NFMT}')
+            self.logger.info(f'{TERM_RED}Execute bull order: {str(math.floor(div(mul(quantity, price), self.buy_price) * 10) / 10)} - {self.buy_price}{TERM_NFMT}')
             self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'BUY', str(math.floor(div(mul(quantity, price), self.buy_price) * 10) / 10), self.buy_price))
             
     except:
@@ -285,8 +286,9 @@ class Coinflex():
       if buy_accumulated_volume > Decimal(volume):
         buy_price = str(buy_order_table[i][0])
         break
-    if Decimal(add(buy_price, min_price_step)) < Decimal(str(sell_order_table[0][0])):
-      buy_price = add(buy_price, min_price_step)
+    if Decimal(buy_price) != Decimal(self.buy_price): 
+      if Decimal(add(buy_price, min_price_step)) < Decimal(str(sell_order_table[0][0])):
+        buy_price = add(buy_price, min_price_step)
 
     # sell price
     sell_price = None
@@ -296,8 +298,9 @@ class Coinflex():
       if sell_accumulated_volume > Decimal(volume):
         sell_price = str(sell_order_table[i][0])
         break
-    if Decimal(sub(sell_price, min_price_step)) > Decimal(str(buy_order_table[0][0])):
-      sell_price = sub(sell_price, min_price_step)
+    if Decimal(sell_price) != Decimal(self.sell_price):
+      if Decimal(sub(sell_price, min_price_step)) > Decimal(str(buy_order_table[0][0])):
+        sell_price = sub(sell_price, min_price_step)
 
     return buy_price, sell_price
 
