@@ -77,25 +77,36 @@ class Coinflex():
         new_buy_price, new_sell_price = self.get_best_price(depth_data, self.buy_volume, self.sell_volume, self.min_price_step)
         cur_ts = int(current_milli_ts())
         
-        # get new buy price, update buy price if the buy order is hung for certain time
-        if (new_buy_price != None and (cur_ts - self.last_buy_price_updated_ts) > self.price_update_interval):
-          if Decimal(new_buy_price) != Decimal(self.buy_price):
-            self.logger.info(f'{TERM_GREEN}Update buy_price: {self.buy_price} => {new_buy_price}, {self.sell_price}{TERM_NFMT}')
-            self.buy_price = new_buy_price
-            for order in self.orders:
-              if order["side"] == "BUY" and Decimal(order["price"]) != Decimal(self.buy_price):
-                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.buy_price))
-          self.last_buy_price_updated_ts = int(current_milli_ts())
+        # 更新buy_price
+        if Decimal(new_buy_price) != Decimal(self.buy_price):
+          self.logger.info(f'Update buy_price: {self.buy_price} => {new_buy_price}, {self.sell_price}')
+          self.buy_price = new_buy_price
+        
+          # 如果更新周期到了,更新orders
+          if (cur_ts - self.last_buy_price_updated_ts) > self.price_update_interval:
+            self.last_buy_price_updated_ts = int(current_milli_ts())
+            for order in self.get_buy_orders():
+              if Decimal(order["price"]) != Decimal(self.buy_price):
+                ## 更新buy_order不太一样,需要看自己有多少usd,才能决定以新的价格能买多少
+                ## 拿到account available USD, 用available_usd除以self.buy_price得到应该下单的volume
+                self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, order["orderId"]))
+                time.sleep(1)
+                usd_available = self.get_available_USD_balance()
+                new_quantity = str(math.floor(Decimal(usd_available) / Decimal(self.buy_price) * 10) / 10)
+                if (Decimal(new_quantity) > 0):
+                  self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", new_quantity, self.buy_price))
 
-        # get new sell price, update sell price if the sell order is hung for certain time  
-        if (new_sell_price != None and (cur_ts - self.last_sell_price_updated_ts) > self.price_update_interval):
-          if Decimal(new_sell_price) != Decimal(self.sell_price):
-            self.logger.info(f'{TERM_GREEN}Update sell_price: {self.buy_price}, {self.sell_price} => {new_sell_price}{TERM_NFMT}')
-            self.sell_price = new_sell_price
-            for order in self.orders:
-              if order["side"] == "SELL" and Decimal(order["price"]) != Decimal(self.sell_price):
-                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
+        # 更新sell_price
+        if Decimal(new_sell_price) != Decimal(self.sell_price):
+          self.logger.info(f'Update sell_price: {self.buy_price}, {self.sell_price} => {new_sell_price}')
+          self.sell_price = new_sell_price
+        
+        if (cur_ts - self.last_sell_price_updated_ts) > self.price_update_interval:
           self.last_sell_price_updated_ts = int(current_milli_ts())
+          for order in self.get_sell_orders():
+            if Decimal(order["price"]) != Decimal(self.sell_price):
+              # 直接更新sell order的价格
+              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
       
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
@@ -108,51 +119,58 @@ class Coinflex():
 
         if 'notice' in data and data['notice'] == 'OrderClosed':
           # 关闭单,把order从self.orders列表删除
-          for index in range(len(self.orders)):
-            if self.orders[index]['orderId'] == data['orderId']:
+          for index, order in enumerate(self.orders):
+            if order['orderId'] == data['orderId']:
               del self.orders[index]
-              self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {data["price"]} - {data["quantity"]} - {data["status"]} {TERM_NFMT}')
-              self.display_orders()
               break
+          self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {data["price"]} - {data["quantity"]} - {data["status"]} {TERM_NFMT}')
+          self.display_orders()
 
         if 'notice' in data and data['notice'] == 'OrderModified':
           # 修改单,把原order从self.orders列表删除,然后把此order添加进orders列表
-          for index in range(len(self.orders)):
-            if self.orders[index]['orderId'] == data['orderId']:
+          for index, order in enumerate(self.orders):
+            if order['orderId'] == data['orderId']:
               del self.orders[index]
-              self.orders.append(data)
-              self.logger.info(f'{TERM_BLUE}Update order list, modified order: {data["orderId"]} - {data["side"]} - {data["price"]} - {data["quantity"]} - {data["status"]} {TERM_NFMT}')
-              self.display_orders()
               break
+          self.orders.append(data)
+          self.logger.info(f'{TERM_BLUE}Update order list, modified order: {data["orderId"]} - {data["side"]} - {data["price"]} - {data["quantity"]} - {data["status"]} {TERM_NFMT}')
+          self.display_orders()
               
 
         if 'notice' in data and data['notice'] == 'OrderMatched':
-          side = data['side']
-          quantity = data['matchQuantity']
-          price = data['matchPrice']
 
           ## 如果是部分成交,关掉此成交单,从orders列表中删除,再把剩余volume建一个新单
           ## 如果是全部成交,就删除就好了
           # 把此order从self.orders列表删除
-          for index in range(len(self.orders)):
-            if self.orders[index]['orderId'] == data['orderId']:
+          for index, order in enumerate(self.orders):
+            if order['orderId'] == data['orderId']:
               del self.orders[index]
-              if Decimal(data["remainQuantity"]) != Decimal("0"):
-                self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, data["orderId"]))
-                time.sleep(2)
-                self.websocket_app.send_command(self.place_limit_order_msg(self.market, side, data['remainQuantity'], price))
-              self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {(data["price"])} - {data["matchQuantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
-              self.display_orders()
               break
+          if Decimal(data["remainQuantity"]) != Decimal("0"):
+            self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, data["orderId"]))
+            time.sleep(1)
+            if data['side'] == "BUY":
+              usd_available = self.get_available_USD_balance()
+              new_quantity = str(math.floor(Decimal(usd_available) / Decimal(data['matchPrice']) * 10) / 10)
+              if (Decimal(new_quantity) > 0):
+                self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", new_quantity, data['matchPrice']))
+            if data['side'] == "SELL":
+              self.websocket_app.send_command(self.place_limit_order_msg(self.market, "SELL", data['remainQuantity'], data['matchPrice']))
+          
+          self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {(data["price"])} - {data["matchQuantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
+          self.display_orders()
 
-          if side == 'BUY':
+          if data['side'] == 'BUY':
             # 买单成交了,要挂卖单
-            self.logger.info(f'{TERM_RED}Execute sell order: {quantity} - {self.sell_price}{TERM_NFMT}')
-            self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'SELL', quantity, self.sell_price))
-          elif side == 'SELL':
+            self.logger.info(f'{TERM_RED}Execute sell order: { data["matchQuantity"]} - {self.sell_price}{TERM_NFMT}')
+            self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'SELL',  data['matchQuantity'], self.sell_price))
+          elif data['side'] == 'SELL':
             # 卖单成交了,要挂买单
-            self.logger.info(f'{TERM_RED}Execute bull order: {str(math.floor(div(mul(quantity, price), self.buy_price) * 10) / 10)} - {self.buy_price}{TERM_NFMT}')
-            self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'BUY', str(math.floor(div(mul(quantity, price), self.buy_price) * 10) / 10), self.buy_price))
+            usd_available = self.get_available_USD_balance()
+            new_quantity = str(math.floor(Decimal(usd_available) / Decimal(self.buy_price) * 10) / 10)
+            if (Decimal(new_quantity) > 0):
+              self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", new_quantity, self.buy_price))
+              self.logger.info(f'{TERM_RED}Execute bull order: {new_quantity} - {self.buy_price}{TERM_NFMT}')
             
     except:
       self.logger.error("on_message error!  %s " % msg)
@@ -175,8 +193,6 @@ class Coinflex():
       self.websocket_app.send_command(self.subscribe_orders_msg(self.market))
       self.websocket_app.send_command(self.subscribe_depth_msg(self.market))
       msg = self.getOrders()
-      usd_available_balance = self.getBalance()
-      self.logger.info(usd_available_balance)
       if 'event' in msg and msg['event']=='orders' and msg['data']:
         self.orders = msg['data']
         self.display_orders()
@@ -263,7 +279,7 @@ class Coinflex():
         "timestamp": current_milli_ts(),
         "marketCode": market,
         "orderId": order_id,
-        "price": float(new_price),
+        "price": float(new_price)
       }
     }
     return json.dumps(msg)
@@ -356,6 +372,27 @@ class Coinflex():
       self.logger.error("http getBalance Error!!!")
       self.logger.error(traceback.format_exc())
   
+  def get_available_USD_balance(self):
+    try:
+      data = self.getBalance()["data"]
+      available_balance = "0"
+      self.logger.info(data)
+      for currency in data:
+        if currency["instrumentId"] == "USD":
+          available_balance = currency["available"]
+      return available_balance
+    except:
+      self.logger.error("get available USD balance Error!!!")
+      self.logger.error(traceback.format_exc())  
+  
   def display_orders(self):
     for order in self.orders:
       self.logger.warn(f'Order: {order["orderId"]} - {order["side"]} - {order["quantity"]} - {order["price"]}')
+  
+  def get_buy_orders(self):
+    return filter(lambda order: order["side"] == "BUY", self.orders)
+  
+  def get_sell_orders(self):
+    return filter(lambda order: order["side"] == "SELL", self.orders)
+
+  
