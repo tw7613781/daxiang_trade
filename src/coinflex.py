@@ -101,12 +101,12 @@ class Coinflex():
           self.logger.info(f'Update sell_price: {self.buy_price}, {self.sell_price} => {new_sell_price}')
           self.sell_price = new_sell_price
         
-        if (cur_ts - self.last_sell_price_updated_ts) > self.price_update_interval:
-          self.last_sell_price_updated_ts = int(current_milli_ts())
-          for order in self.get_sell_orders():
-            if Decimal(order["price"]) != Decimal(self.sell_price):
-              # 直接更新sell order的价格
-              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
+          if (cur_ts - self.last_sell_price_updated_ts) > self.price_update_interval:
+            self.last_sell_price_updated_ts = int(current_milli_ts())
+            for order in self.get_sell_orders():
+              if Decimal(order["price"]) != Decimal(self.sell_price):
+                # 直接更新sell order的价格
+                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
       
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
