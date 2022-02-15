@@ -35,7 +35,8 @@ class Coinflex():
 
     self.buy_price = str(get_json_config(file=self.con_file, section=self.exchange, key="BUYPRICE"))
     self.sell_price = str(get_json_config(file=self.con_file, section=self.exchange, key="SELLPRICE"))
-    self.volume = str(get_json_config(file=self.con_file, section=self.exchange, key="VOLUME"))
+    self.buy_volume = str(get_json_config(file=self.con_file, section=self.exchange, key="BUYVOLUME"))
+    self.sell_volume = str(get_json_config(file=self.con_file, section=self.exchange, key="SELLVOLUME"))
     self.min_price_step = str(get_json_config(file=self.con_file, section=self.exchange, key="MINPRICESTEP"))
 
     self.price_update_interval = int(get_json_config(file=self.con_file, section=self.exchange, key="PRICEUPDATEINTERVAL"))
@@ -47,13 +48,15 @@ class Coinflex():
     self.ping_interval = 10
     
     self.logger = setup_logger(self.account_id + "_" + self.exchange + "_" + current_time_string(), log_path="./logs")
-    self.logger.info(f'{TERM_GREEN}Config loaded ==> user: {self.account_id}, buy_price: {self.buy_price}, sell_price: {self.sell_price}, volume: {self.volume}, price_update_interval: {self.price_update_interval}{TERM_NFMT}')
+    self.logger.info(f'{TERM_GREEN}Config loaded ==> user: {self.account_id}, buy_price: {self.buy_price}, sell_price: {self.sell_price}, buy_volume: {self.buy_volume}, sell_volume: {self.sell_volume}, price_update_interval: {self.price_update_interval}{TERM_NFMT}')
 
     self.websocket_app = MyWebSocketApp(self)
 
     self.orders = []
     self.last_buy_price_updated_ts = 0
     self.last_sell_price_updated_ts = 0
+
+    self.usd_balance = "0"
     
     self.init_finish_event.set()
 
@@ -71,7 +74,7 @@ class Coinflex():
       
       if 'table' in msg and msg['table']=='depth':
         depth_data = msg['data'][0]
-        new_buy_price, new_sell_price = self.get_best_price(depth_data, self.volume, self.min_price_step)
+        new_buy_price, new_sell_price = self.get_best_price(depth_data, self.buy_volume, self.sell_volume, self.min_price_step)
         cur_ts = int(current_milli_ts())
         
         # get new buy price, update buy price if the buy order is hung for certain time
@@ -134,11 +137,11 @@ class Coinflex():
           for index in range(len(self.orders)):
             if self.orders[index]['orderId'] == data['orderId']:
               del self.orders[index]
-              if data["remainQuantity"] != "0":
+              if Decimal(data["remainQuantity"]) != Decimal("0"):
                 self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, data["orderId"]))
                 time.sleep(2)
-                self.websocket_app.send_command(self.place_limit_order_msg(self.market, side, quantity, price))
-              self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {(data["price"])} - {data["quantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
+                self.websocket_app.send_command(self.place_limit_order_msg(self.market, side, data['remainQuantity'], price))
+              self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {(data["price"])} - {data["matchQuantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
               self.display_orders()
               break
 
@@ -172,6 +175,8 @@ class Coinflex():
       self.websocket_app.send_command(self.subscribe_orders_msg(self.market))
       self.websocket_app.send_command(self.subscribe_depth_msg(self.market))
       msg = self.getOrders()
+      usd_available_balance = self.getBalance()
+      self.logger.info(usd_available_balance)
       if 'event' in msg and msg['event']=='orders' and msg['data']:
         self.orders = msg['data']
         self.display_orders()
@@ -274,7 +279,7 @@ class Coinflex():
     }
     return json.dumps(msg)
 
-  def get_best_price(self, depth_data, volume, min_price_step):
+  def get_best_price(self, depth_data, buy_volume, sell_volume, min_price_step):
     buy_order_table = depth_data["bids"]
     sell_order_table = depth_data["asks"]
 
@@ -283,7 +288,7 @@ class Coinflex():
     buy_accumulated_volume = Decimal("0")
     for i in range(len(buy_order_table)):
       buy_accumulated_volume += Decimal(str(buy_order_table[i][1]))
-      if buy_accumulated_volume > Decimal(volume):
+      if buy_accumulated_volume > Decimal(buy_volume):
         buy_price = str(buy_order_table[i][0])
         break
     if Decimal(buy_price) != Decimal(self.buy_price): 
@@ -295,7 +300,7 @@ class Coinflex():
     sell_accumulated_volume = Decimal("0")
     for i in range(len(sell_order_table)):
       sell_accumulated_volume += Decimal(str(sell_order_table[i][1]))
-      if sell_accumulated_volume > Decimal(volume):
+      if sell_accumulated_volume > Decimal(sell_volume):
         sell_price = str(sell_order_table[i][0])
         break
     if Decimal(sell_price) != Decimal(self.sell_price):
@@ -338,6 +343,17 @@ class Coinflex():
       return(self.private_http_call(endpoint))
     except:
       self.logger.error("http getOrders Error!!!")
+      self.logger.error(traceback.format_exc())
+
+  def getBalance(self):
+    '''
+    get account balance
+    '''
+    try:
+      endpoint = '/v2/balances'
+      return(self.private_http_call(endpoint))
+    except:
+      self.logger.error("http getBalance Error!!!")
       self.logger.error(traceback.format_exc())
   
   def display_orders(self):
