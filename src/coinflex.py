@@ -297,31 +297,38 @@ class Coinflex():
 
   def get_best_price(self, depth_data, buy_volume, sell_volume, min_price_step):
     buy_order_table = depth_data["bids"]
+    buy_orders = self.get_buy_orders()
+  
     sell_order_table = depth_data["asks"]
+    sell_orders = self.get_sell_orders()
 
     # buy price
     buy_price = None
     buy_accumulated_volume = Decimal("0")
-    for i in range(len(buy_order_table)):
-      buy_accumulated_volume += Decimal(str(buy_order_table[i][1]))
-      if buy_accumulated_volume > Decimal(buy_volume):
-        buy_price = str(buy_order_table[i][0])
+    for order in buy_order_table:
+      buy_accumulated_volume += Decimal(str(order[1]))
+      for my_buy_order in buy_orders:
+        if Decimal(str(my_buy_order["price"])) == Decimal(str(order[0])):
+           buy_accumulated_volume -= Decimal(str(my_buy_order["quantity"]))
+      if buy_accumulated_volume >= Decimal(buy_volume):
+        buy_price = str(order[0])
         break
-    if Decimal(buy_price) != Decimal(self.buy_price): 
-      if Decimal(add(buy_price, min_price_step)) < Decimal(str(sell_order_table[0][0])):
-        buy_price = add(buy_price, min_price_step)
+    if Decimal(add(buy_price, min_price_step)) < Decimal(str(sell_order_table[0][0])):
+      buy_price = add(buy_price, min_price_step)
 
     # sell price
     sell_price = None
     sell_accumulated_volume = Decimal("0")
-    for i in range(len(sell_order_table)):
-      sell_accumulated_volume += Decimal(str(sell_order_table[i][1]))
-      if sell_accumulated_volume > Decimal(sell_volume):
-        sell_price = str(sell_order_table[i][0])
+    for order in sell_order_table:
+      sell_accumulated_volume += Decimal(str(order[1]))
+      for my_sell_order in sell_orders:
+        if Decimal(str(my_sell_order["price"])) == Decimal(str(order[0])):
+           sell_accumulated_volume -= Decimal(str(my_sell_order["quantity"]))   
+      if sell_accumulated_volume >= Decimal(sell_volume):
+        sell_price = str(order[0])
         break
-    if Decimal(sell_price) != Decimal(self.sell_price):
-      if Decimal(sub(sell_price, min_price_step)) > Decimal(str(buy_order_table[0][0])):
-        sell_price = sub(sell_price, min_price_step)
+    if Decimal(sub(sell_price, min_price_step)) > Decimal(str(buy_order_table[0][0])):
+      sell_price = sub(sell_price, min_price_step)
 
     return buy_price, sell_price
 
