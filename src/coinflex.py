@@ -313,6 +313,8 @@ class Coinflex():
       if buy_accumulated_volume >= Decimal(buy_volume):
         buy_price = str(order[0])
         break
+    if buy_price == None:
+      buy_price = str(buy_order_table[-1][0])
     if Decimal(add(buy_price, min_price_step)) < Decimal(str(sell_order_table[0][0])):
       buy_price = add(buy_price, min_price_step)
 
@@ -327,6 +329,8 @@ class Coinflex():
       if sell_accumulated_volume >= Decimal(sell_volume):
         sell_price = str(order[0])
         break
+    if sell_price == None:
+      sell_price = str(sell_order_table[-1][0])
     if Decimal(sub(sell_price, min_price_step)) > Decimal(str(buy_order_table[0][0])):
       sell_price = sub(sell_price, min_price_step)
 
@@ -397,9 +401,9 @@ class Coinflex():
       self.logger.warn(f'Order: {order["orderId"]} - {order["side"]} - {order["quantity"]} - {order["price"]}')
   
   def get_buy_orders(self):
-    return filter(lambda order: order["side"] == "BUY", self.orders)
+    return list(filter(lambda order: order["side"] == "BUY", self.orders))
   
   def get_sell_orders(self):
-    return filter(lambda order: order["side"] == "SELL", self.orders)
+    return list(filter(lambda order: order["side"] == "SELL", self.orders))
 
   
