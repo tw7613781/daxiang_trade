@@ -86,10 +86,8 @@ class Coinflex():
           if (cur_ts - self.last_buy_price_updated_ts) > self.price_update_interval:
             self.last_buy_price_updated_ts = int(current_milli_ts())
             for order in self.get_buy_orders():
-              ## 更新buy_order不太一样,需要看自己有多少usd,才能决定以新的价格能买多少
-              ## 拿到account available USD, 用available_usd除以self.buy_price得到应该下单的volume
-              usd_available = self.get_available_USD_balance()
-              new_quantity = str(math.floor(Decimal(usd_available) / Decimal(self.buy_price) * 10) / 10)
+              # 更新价格的时候,需要更新量,不然usd会超过拥有的usd
+              new_quantity = str(math.floor(Decimal(str(order["quantity"])) * Decimal(str(order["price"])) / Decimal(self.buy_price) * 10) / 10)
               if (Decimal(new_quantity) > 0):
                 self.websocket_app.send_command(self.modify_limit_order_msg(self.market, "BUY", new_quantity, self.buy_price))
 
