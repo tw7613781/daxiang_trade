@@ -191,7 +191,7 @@ class Coinflex():
       self.websocket_app.send_command(self.subscribe_depth_msg(self.market))
       msg = self.getOrders()
       if 'event' in msg and msg['event']=='orders' and msg['data']:
-        self.orders = msg['data']
+        self.orders = list(filter(lambda order: order["status"] == "OrderOpened", msg['data']))
         self.display_orders()
     except:
       self.logger.error("on_open Error!!!")
