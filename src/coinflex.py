@@ -136,6 +136,8 @@ class Coinflex():
 
         if 'notice' in data and data['notice'] == 'OrderMatched':
 
+          self.logger.info(f'{TERM_RED}Order matched: {data["orderId"]} - {data["side"]} - {(data["price"])} - {data["matchQuantity"]}{TERM_NFMT}')
+
           ## 如果是部分成交,关掉此成交单,从orders列表中删除,再把剩余volume建一个新单
           ## 如果是全部成交,就删除就好了
           # 把此order从self.orders列表删除
@@ -153,13 +155,10 @@ class Coinflex():
                 self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", new_quantity, data['matchPrice']))
             if data['side'] == "SELL":
               self.websocket_app.send_command(self.place_limit_order_msg(self.market, "SELL", data['remainQuantity'], data['matchPrice']))
-          
-          self.logger.info(f'{TERM_BLUE}Update order list, remove order: {data["orderId"]} - {data["side"]} - {(data["price"])} - {data["matchQuantity"]} - THE ORDER IS FULLY FILLED OR PARTIALLY FILLED {TERM_NFMT}')
-          self.display_orders()
 
           if data['side'] == 'BUY':
             # 买单成交了,要挂卖单
-            self.logger.info(f'{TERM_RED}Execute sell order: { data["matchQuantity"]} - {self.sell_price}{TERM_NFMT}')
+            self.logger.info(f'{TERM_GREEN}Execute sell order: { data["matchQuantity"]} - {self.sell_price}{TERM_NFMT}')
             self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'SELL',  data['matchQuantity'], self.sell_price))
           elif data['side'] == 'SELL':
             # 卖单成交了,要挂买单
@@ -167,7 +166,7 @@ class Coinflex():
             new_quantity = str(math.floor(Decimal(usd_available) / Decimal(self.buy_price) * 10) / 10)
             if (Decimal(new_quantity) > 0):
               self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", new_quantity, self.buy_price))
-              self.logger.info(f'{TERM_RED}Execute bull order: {new_quantity} - {self.buy_price}{TERM_NFMT}')
+              self.logger.info(f'{TERM_GREEN}Execute bull order: {new_quantity} - {self.buy_price}{TERM_NFMT}')
             
     except:
       self.logger.error("on_message error!  %s " % msg)
@@ -385,7 +384,6 @@ class Coinflex():
     try:
       data = self.getBalance()["data"]
       available_balance = "0"
-      self.logger.info(data)
       for currency in data:
         if currency["instrumentId"] == "USD":
           available_balance = currency["available"]
