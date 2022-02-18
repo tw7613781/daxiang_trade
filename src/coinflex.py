@@ -88,12 +88,10 @@ class Coinflex():
             for order in self.get_buy_orders():
               ## 更新buy_order不太一样,需要看自己有多少usd,才能决定以新的价格能买多少
               ## 拿到account available USD, 用available_usd除以self.buy_price得到应该下单的volume
-              self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, order["orderId"]))
-              time.sleep(1)
               usd_available = self.get_available_USD_balance()
               new_quantity = str(math.floor(Decimal(usd_available) / Decimal(self.buy_price) * 10) / 10)
               if (Decimal(new_quantity) > 0):
-                self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", new_quantity, self.buy_price))
+                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, "BUY", new_quantity, self.buy_price))
 
         # 更新sell_price
         if Decimal(new_sell_price) != Decimal(self.sell_price):
