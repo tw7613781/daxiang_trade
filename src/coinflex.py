@@ -104,7 +104,8 @@ class Coinflex():
             self.last_sell_price_updated_ts = int(current_milli_ts())
             for order in self.get_sell_orders():
               # 直接更新sell order的价格
-              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], self.sell_price))
+              quantity = order["remainQuantity"] if order["remainQuantity"] else order["quantity"]
+              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], quantity, self.sell_price))
       
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
@@ -269,7 +270,7 @@ class Coinflex():
     }
     return json.dumps(msg)
   
-  def modify_limit_order_msg(self, market, order_id, new_price):
+  def modify_limit_order_msg(self, market, order_id, new_quantity, new_price):
     msg = {
       "op": "modifyorder",
       "tag": 1,
@@ -277,7 +278,8 @@ class Coinflex():
         "timestamp": current_milli_ts(),
         "marketCode": market,
         "orderId": order_id,
-        "price": float(new_price)
+        "price": float(new_price),
+        "quantity": float(new_quantity)
       }
     }
     return json.dumps(msg)
@@ -364,7 +366,7 @@ class Coinflex():
     get account's unfilled orders
     '''
     try:
-      endpoint = '/v2/orders'
+      endpoint = '/v2.1/orders'
       return(self.private_http_call(endpoint))
     except:
       self.logger.error("http getOrders Error!!!")
