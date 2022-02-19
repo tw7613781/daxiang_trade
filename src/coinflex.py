@@ -89,7 +89,7 @@ class Coinflex():
               # 更新价格的时候,需要更新量,不然usd会超过拥有的usd
               new_quantity = str(math.floor(Decimal(str(order["quantity"])) * Decimal(str(order["price"])) / Decimal(self.buy_price) * 10) / 10)
               if (Decimal(new_quantity) > 0):
-                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, "BUY", new_quantity, self.buy_price))
+                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], new_quantity, self.buy_price))
 
         # 更新sell_price
         if Decimal(new_sell_price) != Decimal(self.sell_price):
@@ -100,8 +100,7 @@ class Coinflex():
             self.last_sell_price_updated_ts = int(current_milli_ts())
             for order in self.get_sell_orders():
               # 直接更新sell order的价格
-              quantity = order["remainQuantity"] if order["remainQuantity"] else order["quantity"]
-              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], quantity, self.sell_price))
+              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], order["quantity"], self.sell_price))
       
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
@@ -187,8 +186,9 @@ class Coinflex():
       self.websocket_app.send_command(self.subscribe_orders_msg(self.market))
       self.websocket_app.send_command(self.subscribe_depth_msg(self.market))
       msg = self.getOrders()
+      # self.logger.info(msg)
       if 'event' in msg and msg['event']=='orders' and msg['data']:
-        self.orders = list(filter(lambda order: order["status"] == "OrderOpened", msg['data']))
+        self.orders = list(filter(lambda order: (order["status"] == "OrderOpened" or order["status"] == "OrderModified"), msg['data']))
         self.display_orders()
     except:
       self.logger.error("on_open Error!!!")
