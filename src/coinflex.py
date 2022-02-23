@@ -77,7 +77,7 @@ class Coinflex():
         if not order_modify_succeed:
           self.logger.error(msg)
           data = msg['data']
-          quantity = Decimal(str(data['quantity'])) - Decimal("1")
+          quantity = Decimal(str(data['quantity'])) - Decimal("0.1")
           self.logger.info(f'modify again: {data["orderId"]} - {data["price"]} - {quantity}')
           self.websocket_app.send_command(self.modify_limit_order_msg(self.market, data["orderId"], quantity, data["price"]))
 
