@@ -71,7 +71,16 @@ class Coinflex():
 
       if 'event' in msg and msg['event']=='login':
         self.logger.info(f'{TERM_GREEN}Login succeed{TERM_NFMT}')
-      
+
+      if 'event' in msg and msg['event']=='modifyorder':
+        order_modify_succeed = msg['submitted'] if 'submitted' in msg else False
+        if not order_modify_succeed:
+          self.logger.error(msg)
+          data = msg['data']
+          quantity = Decimal(str(data['quantity'])) - Decimal("1")
+          self.logger.info(f'modify again: {data["orderId"]} - {data["price"]} - {quantity}')
+          self.websocket_app.send_command(self.modify_limit_order_msg(self.market, data["orderId"], quantity, data["price"]))
+
       if 'table' in msg and msg['table']=='depth':
         depth_data = msg['data'][0]
         new_buy_price, new_sell_price = self.get_best_price(depth_data, self.buy_volume, self.sell_volume, self.min_price_step)
@@ -87,7 +96,13 @@ class Coinflex():
             self.last_buy_price_updated_ts = int(current_milli_ts())
             for order in self.get_buy_orders():
               # 更新价格的时候,需要更新量,不然usd会超过拥有的usd
-              quantity = order["remainQuantity"] if "remainQuantity" in order else order["quantity"]
+              quantity = None
+              if "remainingQuantity" in order:
+                quantity = order["remainingQuantity"]
+              elif "remainQuantity" in order:
+                quantity = order["remainQuantity"]
+              else:
+                quantity = order["quantity"]
               new_quantity = str(math.floor(Decimal(str(quantity)) * Decimal(str(order["price"])) / Decimal(self.buy_price) * 10) / 10)
               if (Decimal(new_quantity) > 0):
                 self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], new_quantity, self.buy_price))
@@ -100,7 +115,13 @@ class Coinflex():
           if (cur_ts - self.last_sell_price_updated_ts) > self.price_update_interval:
             self.last_sell_price_updated_ts = int(current_milli_ts())
             for order in self.get_sell_orders():
-              quantity = order["remainQuantity"] if "remainQuantity" in order else order["quantity"]
+              quantity = None
+              if "remainingQuantity" in order:
+                quantity = order["remainingQuantity"]
+              elif "remainQuantity" in order:
+                quantity = order["remainQuantity"]
+              else:
+                quantity = order["quantity"]
               # 直接更新sell order的价格
               self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], quantity, self.sell_price))
       
@@ -164,15 +185,15 @@ class Coinflex():
 
           if data['side'] == 'BUY':
             # 买单成交了,要挂卖单
-            self.logger.info(f'{TERM_GREEN}Execute sell order: { data["matchQuantity"]} - {self.sell_price}{TERM_NFMT}')
             self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'SELL',  data['matchQuantity'], self.sell_price))
+            self.logger.info(f'{TERM_GREEN}Execute sell order: {self.sell_price} - {data["matchQuantity"]}{TERM_NFMT}')
           elif data['side'] == 'SELL':
             # 卖单成交了,要挂买单
             usd_available = self.get_available_USD_balance()
             new_quantity = str(math.floor(Decimal(usd_available) / Decimal(self.buy_price) * 10) / 10)
             if (Decimal(new_quantity) > 0):
               self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", new_quantity, self.buy_price))
-              self.logger.info(f'{TERM_GREEN}Execute bull order: {new_quantity} - {self.buy_price}{TERM_NFMT}')
+              self.logger.info(f'{TERM_GREEN}Execute buy order: {self.buy_price} - {new_quantity}{TERM_NFMT}')
             
     except:
       self.logger.error("on_message error!  %s " % msg)
@@ -197,7 +218,7 @@ class Coinflex():
       msg = self.getOrders()
       # self.logger.info(msg)
       if 'event' in msg and msg['event']=='orders' and msg['data']:
-        self.orders = list(filter(lambda order: (order["status"] == "OrderOpened" or order["status"] == "OrderModified"), msg['data']))
+        self.orders = msg['data']
         self.display_orders()
     except:
       self.logger.error("on_open Error!!!")
@@ -370,7 +391,7 @@ class Coinflex():
     get account's unfilled orders
     '''
     try:
-      endpoint = '/v2.1/orders'
+      endpoint = '/v2/orders'
       return(self.private_http_call(endpoint))
     except:
       self.logger.error("http getOrders Error!!!")
