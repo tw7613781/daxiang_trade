@@ -57,6 +57,8 @@ class Coinflex():
     self.last_sell_price_updated_ts = 0
 
     self.usd_balance = "0"
+
+    self.recv_window = 1000
     
     self.init_finish_event.set()
 
@@ -77,9 +79,12 @@ class Coinflex():
         if not order_modify_succeed:
           self.logger.error(msg)
           data = msg['data']
-          quantity = Decimal(str(data['quantity'])) - Decimal("0.1")
-          self.logger.info(f'modify again: {data["orderId"]} - {data["price"]} - {quantity}')
-          self.websocket_app.send_command(self.modify_limit_order_msg(self.market, data["orderId"], quantity, data["price"]))
+          if "recvWindow" in msg["message"]:
+            self.recv_window +=500
+            self.websocket_app.send_command(self.modify_limit_order_msg(self.market, data["orderId"], data["quantity"], data["price"], self.recv_window))
+          elif "FAILED balance check" in msg["message"]:
+            quantity = Decimal(str(data['quantity'])) - Decimal("0.1")
+            self.websocket_app.send_command(self.modify_limit_order_msg(self.market, data["orderId"], quantity, data["price"]))
 
       if 'table' in msg and msg['table']=='depth':
         depth_data = msg['data'][0]
@@ -295,7 +300,7 @@ class Coinflex():
     }
     return json.dumps(msg)
   
-  def modify_limit_order_msg(self, market, order_id, new_quantity, new_price):
+  def modify_limit_order_msg(self, market, order_id, new_quantity, new_price, recv_window = 1000):
     msg = {
       "op": "modifyorder",
       "tag": 1,
@@ -304,7 +309,8 @@ class Coinflex():
         "marketCode": market,
         "orderId": order_id,
         "price": float(new_price),
-        "quantity": float(new_quantity)
+        "quantity": float(new_quantity),
+        "recvWindow": float(recv_window)
       }
     }
     return json.dumps(msg)
