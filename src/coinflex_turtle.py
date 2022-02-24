@@ -11,28 +11,20 @@ from decimal import Decimal
 from src.common.global_utils import *
 from src.coinflex_base import CoinflexBase
 
-class CoinflexFly(CoinflexBase):
+class CoinflexTurtle(CoinflexBase):
 
   def __init__(self, config_file):    
-    super(CoinflexFly, self).__init__(config_file)
+    super(CoinflexTurtle, self).__init__(config_file)
 
-    self.strategyName = "Fly"
+    self.strategyName = "Turtle"
 
     self.buy_price = str(get_json_config(file=self.con_file, section=self.exchange, key="BUYPRICE"))
     self.sell_price = str(get_json_config(file=self.con_file, section=self.exchange, key="SELLPRICE"))
-    self.buy_volume = str(get_json_config(file=self.con_file, section=self.exchange, key="BUYVOLUME"))
-    self.sell_volume = str(get_json_config(file=self.con_file, section=self.exchange, key="SELLVOLUME"))
-    self.min_price_step = str(get_json_config(file=self.con_file, section=self.exchange, key="MINPRICESTEP"))
-
-    self.price_update_interval = int(get_json_config(file=self.con_file, section=self.exchange, key="PRICEUPDATEINTERVAL"))
     
     self.logger = setup_logger(self.account_id + "_" + self.exchange + "_" + self.strategyName + "_" + current_time_string(), log_path="./logs")
-    self.logger.info(f'{TERM_GREEN}Config loaded ==> user: {self.account_id}, buy_price: {self.buy_price}, sell_price: {self.sell_price}, buy_volume: {self.buy_volume}, sell_volume: {self.sell_volume}, price_update_interval: {self.price_update_interval}{TERM_NFMT}')
+    self.logger.info(f'{TERM_GREEN}Config loaded ==> user: {self.account_id}, buy_price: {self.buy_price}, sell_price: {self.sell_price}{TERM_NFMT}')
 
     self.orders = []
-    self.last_buy_price_updated_ts = 0
-    self.last_sell_price_updated_ts = 0
-
     self.recv_window = 1000
     
   def on_message(self, msg, ws=None):
@@ -47,62 +39,23 @@ class CoinflexFly(CoinflexBase):
       if 'event' in msg and msg['event']=='login':
         self.logger.info(f'{TERM_GREEN}Login succeed{TERM_NFMT}')
 
-      if 'event' in msg and msg['event']=='modifyorder':
-        order_modify_succeed = msg['submitted'] if 'submitted' in msg else False
-        if not order_modify_succeed:
+      if 'event' in msg and msg['event']=='placeorder':
+        order_succeed = msg['submitted'] if 'submitted' in msg else False
+        if not order_succeed:
           self.logger.error(msg)
           data = msg['data']
           if "recvWindow" in msg["message"]:
             self.recv_window +=500
-            self.websocket_app.send_command(self.modify_limit_order_msg(self.market, data["orderId"], data["quantity"], data["price"], self.recv_window))
+            self.websocket_app.send_command(self.place_limit_order_msg(self.market, data["side"], data["quantity"], data["price"], self.recv_window))
           elif "FAILED balance check" in msg["message"]:
             quantity = Decimal(str(data['quantity'])) - Decimal("0.1")
-            self.websocket_app.send_command(self.modify_limit_order_msg(self.market, data["orderId"], quantity, data["price"]))
+            self.websocket_app.send_command(self.place_limit_order_msg(self.market, data["side"], quantity, data["price"]))
 
       if 'table' in msg and msg['table']=='depth':
         depth_data = msg['data'][0]
-        new_buy_price, new_sell_price = self.get_best_price(depth_data, self.buy_volume, self.sell_volume, self.min_price_step)
-        cur_ts = int(current_milli_ts())
+        new_buy_price, new_sell_price = self.get_best_price(depth_data)
+        # self.logger.info(f'{new_buy_price} - {new_sell_price}')
 
-        # 更新buy_price
-        if Decimal(new_buy_price) != Decimal(self.buy_price):
-          self.logger.info(f'Update buy_price: {self.buy_price} => {new_buy_price}, {self.sell_price}')
-          self.buy_price = new_buy_price
-        
-          # 如果更新周期到了,更新orders
-          if (cur_ts - self.last_buy_price_updated_ts) > self.price_update_interval:
-            self.last_buy_price_updated_ts = int(current_milli_ts())
-            for order in self.get_buy_orders():
-              # 更新价格的时候,需要更新量,不然usd会超过拥有的usd
-              quantity = None
-              if "remainingQuantity" in order:
-                quantity = order["remainingQuantity"]
-              elif "remainQuantity" in order:
-                quantity = order["remainQuantity"]
-              else:
-                quantity = order["quantity"]
-              new_quantity = str(math.floor(Decimal(str(quantity)) * Decimal(str(order["price"])) / Decimal(self.buy_price) * 10) / 10)
-              if (Decimal(new_quantity) > 0):
-                self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], new_quantity, self.buy_price))
-
-        # 更新sell_price
-        if Decimal(new_sell_price) != Decimal(self.sell_price):
-          self.logger.info(f'Update sell_price: {self.buy_price}, {self.sell_price} => {new_sell_price}')
-          self.sell_price = new_sell_price
-        
-          if (cur_ts - self.last_sell_price_updated_ts) > self.price_update_interval:
-            self.last_sell_price_updated_ts = int(current_milli_ts())
-            for order in self.get_sell_orders():
-              quantity = None
-              if "remainingQuantity" in order:
-                quantity = order["remainingQuantity"]
-              elif "remainQuantity" in order:
-                quantity = order["remainQuantity"]
-              else:
-                quantity = order["quantity"]
-              # 直接更新sell order的价格
-              self.websocket_app.send_command(self.modify_limit_order_msg(self.market, order["orderId"], quantity, self.sell_price))
-      
       if 'table' in msg and msg['table']=='order':
         data = msg['data'][0]
         # self.logger.info(f'{TERM_BLUE}{data}{TERM_NFMT}')
@@ -168,7 +121,6 @@ class CoinflexFly(CoinflexBase):
       self.websocket_app.send_command(self.subscribe_orders_msg(self.market))
       self.websocket_app.send_command(self.subscribe_depth_msg(self.market))
       msg = self.getOrders()
-      # self.logger.info(msg)
       if 'event' in msg and msg['event']=='orders' and msg['data']:
         self.orders = msg['data']
         self.display_orders()
@@ -176,44 +128,12 @@ class CoinflexFly(CoinflexBase):
       self.logger.error("on_open Error!!!")
       self.logger.error(traceback.format_exc())
 
-  def get_best_price(self, depth_data, buy_volume, sell_volume, min_price_step):
+  def get_best_price(self, depth_data):
     buy_order_table = depth_data["bids"]
-    buy_orders = self.get_buy_orders()
-  
+    buy_price = buy_order_table[0][0]
+
     sell_order_table = depth_data["asks"]
-    sell_orders = self.get_sell_orders()
-
-    # buy price
-    buy_price = None
-    buy_accumulated_volume = Decimal("0")
-    for order in buy_order_table:
-      buy_accumulated_volume += Decimal(str(order[1]))
-      for my_buy_order in buy_orders:
-        if Decimal(str(my_buy_order["price"])) == Decimal(str(order[0])):
-          buy_accumulated_volume -= Decimal(str(my_buy_order["quantity"]))
-      if buy_accumulated_volume >= Decimal(buy_volume):
-        buy_price = str(order[0])
-        break
-    if buy_price == None:
-      buy_price = str(buy_order_table[-1][0])
-    if Decimal(add(buy_price, min_price_step)) < Decimal(str(sell_order_table[0][0])):
-      buy_price = add(buy_price, min_price_step)
-
-    # sell price
-    sell_price = None
-    sell_accumulated_volume = Decimal("0")
-    for order in sell_order_table:
-      sell_accumulated_volume += Decimal(str(order[1]))
-      for my_sell_order in sell_orders:
-        if Decimal(str(my_sell_order["price"])) == Decimal(str(order[0])):
-          sell_accumulated_volume -= Decimal(str(my_sell_order["quantity"]))   
-      if sell_accumulated_volume >= Decimal(sell_volume):
-        sell_price = str(order[0])
-        break
-    if sell_price == None:
-      sell_price = str(sell_order_table[-1][0])
-    if Decimal(sub(sell_price, min_price_step)) > Decimal(str(buy_order_table[0][0])):
-      sell_price = sub(sell_price, min_price_step)
+    sell_price = sell_order_table[0][0]
 
     return buy_price, sell_price
 
