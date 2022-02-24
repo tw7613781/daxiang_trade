@@ -16,6 +16,8 @@ class CoinflexFly(CoinflexBase):
   def __init__(self, config_file):    
     super(CoinflexFly, self).__init__(config_file)
 
+    self.strategyName = "Fly"
+
     self.buy_price = str(get_json_config(file=self.con_file, section=self.exchange, key="BUYPRICE"))
     self.sell_price = str(get_json_config(file=self.con_file, section=self.exchange, key="SELLPRICE"))
     self.buy_volume = str(get_json_config(file=self.con_file, section=self.exchange, key="BUYVOLUME"))
@@ -24,17 +26,12 @@ class CoinflexFly(CoinflexBase):
 
     self.price_update_interval = int(get_json_config(file=self.con_file, section=self.exchange, key="PRICEUPDATEINTERVAL"))
     
-
-    
-    self.logger = setup_logger(self.account_id + "_" + self.exchange + "_" + current_time_string(), log_path="./logs")
+    self.logger = setup_logger(self.account_id + "_" + self.exchange + "_" + self.strategyName + "_" + current_time_string(), log_path="./logs")
     self.logger.info(f'{TERM_GREEN}Config loaded ==> user: {self.account_id}, buy_price: {self.buy_price}, sell_price: {self.sell_price}, buy_volume: {self.buy_volume}, sell_volume: {self.sell_volume}, price_update_interval: {self.price_update_interval}{TERM_NFMT}')
-
 
     self.orders = []
     self.last_buy_price_updated_ts = 0
     self.last_sell_price_updated_ts = 0
-
-    self.usd_balance = "0"
 
     self.recv_window = 1000
     
@@ -146,24 +143,6 @@ class CoinflexFly(CoinflexBase):
                 del self.orders[index]
                 break
 
-          # ## 如果是部分成交,关掉此成交单,从orders列表中删除,再把剩余volume建一个新单
-          # ## 如果是全部成交,就删除就好了
-          # # 把此order从self.orders列表删除
-          # for index, order in enumerate(self.orders):
-          #   if order['orderId'] == data['orderId']:
-          #     del self.orders[index]
-          #     break
-          # if Decimal(data["remainQuantity"]) != Decimal("0"):
-          #   self.websocket_app.send_command(self.cancel_limit_order_msg(self.market, data["orderId"]))
-          #   time.sleep(1)
-          #   if data['side'] == "BUY":
-          #     usd_available = self.get_available_USD_balance()
-          #     new_quantity = str(math.floor(Decimal(usd_available) / Decimal(data['matchPrice']) * 10) / 10)
-          #     if (Decimal(new_quantity) > 0):
-          #       self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", new_quantity, data['matchPrice']))
-          #   if data['side'] == "SELL":
-          #     self.websocket_app.send_command(self.place_limit_order_msg(self.market, "SELL", data['remainQuantity'], data['matchPrice']))
-
           if data['side'] == 'BUY':
             # 买单成交了,要挂卖单
             self.websocket_app.send_command(self.place_limit_order_msg(self.market, 'SELL',  data['matchQuantity'], self.sell_price))
@@ -211,7 +190,7 @@ class CoinflexFly(CoinflexBase):
       buy_accumulated_volume += Decimal(str(order[1]))
       for my_buy_order in buy_orders:
         if Decimal(str(my_buy_order["price"])) == Decimal(str(order[0])):
-           buy_accumulated_volume -= Decimal(str(my_buy_order["quantity"]))
+          buy_accumulated_volume -= Decimal(str(my_buy_order["quantity"]))
       if buy_accumulated_volume >= Decimal(buy_volume):
         buy_price = str(order[0])
         break
@@ -227,7 +206,7 @@ class CoinflexFly(CoinflexBase):
       sell_accumulated_volume += Decimal(str(order[1]))
       for my_sell_order in sell_orders:
         if Decimal(str(my_sell_order["price"])) == Decimal(str(order[0])):
-           sell_accumulated_volume -= Decimal(str(my_sell_order["quantity"]))   
+          sell_accumulated_volume -= Decimal(str(my_sell_order["quantity"]))   
       if sell_accumulated_volume >= Decimal(sell_volume):
         sell_price = str(order[0])
         break
