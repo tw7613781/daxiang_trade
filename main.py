@@ -2,7 +2,7 @@
 Daxiang trading robot main entry
 '''
 import sys
-from src.coinflex import Coinflex
+from coinflex_base import Coinflex
 
 if __name__ == '__main__':
   config_file = sys.argv[-1]
