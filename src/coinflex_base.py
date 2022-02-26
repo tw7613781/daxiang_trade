@@ -217,14 +217,17 @@ class CoinflexBase():
       self.logger.error("http getBalance Error!!!")
       self.logger.error(traceback.format_exc())
   
-  def get_available_USD_balance(self):
+  def get_available_balance_by_id(self, instrumentId):
+    '''
+    "USD", "FLEX"
+    '''
     try:
       data = self.getBalance()["data"]
       available_balance = "0"
       for currency in data:
-        if currency["instrumentId"] == "USD":
+        if currency["instrumentId"] == instrumentId:
           available_balance = currency["available"]
       return available_balance
     except:
-      self.logger.error("get available USD balance Error!!!")
+      self.logger.error("get available balance Error!!!")
       self.logger.error(traceback.format_exc())
