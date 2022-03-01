@@ -181,11 +181,11 @@ class CoinflexTurtle(CoinflexBase):
     buy_balance = self.get_available_balance_by_id(buy_token)
     buy_amount = str(math.floor(Decimal(buy_balance) / Decimal(self.steps) * 10) / 10) 
     self.buy_step = (Decimal(self.middle_price) - Decimal(self.buy_price)) / Decimal(self.steps)
-    if (Decimal(buy_amount) > 0):
-      price = self.middle_price
-      for i in range(int(self.steps)):
-        price = Decimal(price) - Decimal(self.buy_step)
-        format_price = str(math.floor(price * 1000) / 1000)
-        amount = str(math.floor(Decimal(buy_amount) / Decimal(format_price) * 10) / 10)
+    price = self.middle_price
+    for i in range(int(self.steps)):
+      price = Decimal(price) - Decimal(self.buy_step)
+      format_price = str(math.floor(price * 1000) / 1000)
+      amount = str(math.floor(Decimal(buy_amount) / Decimal(format_price) * 10) / 10)
+      if (Decimal(amount) > 0):
         self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", amount, format_price))
         self.logger.info(f'{TERM_GREEN}Execute buy order: {format_price} - {amount}{TERM_NFMT}')
