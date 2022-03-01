@@ -186,5 +186,6 @@ class CoinflexTurtle(CoinflexBase):
       for i in range(int(self.steps)):
         price = Decimal(price) - Decimal(self.buy_step)
         format_price = str(math.floor(price * 1000) / 1000)
-        self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", buy_amount, format_price))
-        self.logger.info(f'{TERM_GREEN}Execute buy order: {format_price} - {buy_amount}{TERM_NFMT}')
+        amount = str(math.floor(Decimal(buy_amount) / Decimal(format_price) * 10) / 10)
+        self.websocket_app.send_command(self.place_limit_order_msg(self.market, "BUY", amount, format_price))
+        self.logger.info(f'{TERM_GREEN}Execute buy order: {format_price} - {amount}{TERM_NFMT}')
